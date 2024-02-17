@@ -1,3 +1,4 @@
+Enable selinux:
 1. selinux config:
 /etc/selinux/config
 SELINUX=permissive
@@ -5,3 +6,64 @@ SELINUX=permissive
 2. cmdline add "selinux=1"
 3. touch /.autorelabel
 4. reboot
+
+
+contexts file:
+/etc/selinux/targeted/contexts/files/file_contexts
+
+
+make:
+setenforce 1
+ 
+semodule -r myapp
+semodule -i /tmp/myapp.pp
+restorecon /myapp/myapp /myfile/a.txt /mylib/libmyread.so
+ls -Z /myapp/myapp /myfile/a.txt /mylib/libmyread.so
+ 
+ 
+audit2allow -i /var/log/audit/audit.log
+ 
+echo "" > /var/log/audit/audit.log
+ 
+ 
+ 
+semanage fcontext -a -t etc_t -s system_u /etc/freetds.conf.new
+cat /etc/selinux/targeted/contexts/files/file_contexts.local
+ 
+cp /usr/share/selinux/devel/Makefile  ./
+ 
+sesearch -T -s unconfined_t -t initrc_exec_t
+
+继承unconfined_t:
+module myapp 1.0;
+type myapp_t;
+require{
+class file {relabelto getattr};
+class capability2{mac_admin};
+class filesystem{associate};
+type tmpfs_t;
+    type unconfined_t;
+};
+ 
+allow unconfined_t myapp_t:file relabelto;
+allow myapp_t tmpfs_t:filesystem associate;
+allow unconfined_t myapp_t:file getattr;
+ 
+#此版本支持*通配符，allow myapp_t myapp_exec_t:file *;
+ 
+setenforce 0
+chcon -t myfile_t /myfile/a.txt
+chcon -t mylib_t /mylib/libmyread.so
+chcon -t myapp_exec_t /myapp/myapp
+setenforce 1
+ls -Z /myapp/myapp /mylib/libmyread.so /myfile/a.txt
+ 
+LD_LIBRARY_PATH=/mylib:$LD_LIBRARY_PATH
+export LD_LIBRARY_PATH
+
+sudo相关:
+1、对于调用sudo命令的二进制，建议继承unconfined­_t，不然要写很多关于sudo相关的策略
+2、继承unconfined­_t，不用配置额外策略，相关权限控制只由sudo决定
+3、脚本配置策略也是一样的，有域转换等概念
+
+
