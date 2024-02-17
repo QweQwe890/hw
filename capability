@@ -1,0 +1,47 @@
+普通用户允许执行reboot
+ 
+1、如果调用c接口reboot，需要cap_sys_boot
+2、如果是通过执行reboot命令，需要cap_kill
+reboot是busybox提供的，原理是向1进程发送SIGTERM信号
+
+setcap cap_kill=eip reboot
+ 
+ 
+capability的继承关系：
+      P'(permitted) = (P(inheritable) & F(inheritable)) |(F(permitted) & cap_bset)
+      P'(effective) = F(effective) ? P'(permitted) : 0
+      P'(inheritable) = P(inheritable)
+ 
+      说明:
+      P   在执行execve函数前，进程的能力
+      P'  在执行execve函数后，子进程的能力
+      F   可执行文件的能力
+ 
+https://www.ibm.com/developerworks/cn/linux/l-posixcap.html
+prctl(PR_SET_KEEPCAPS, 1, 1, 1);
+后面执行setuid，进程只会继承ip位，e位会被清空
+ 
+setcap有两种方式：
+ 
+caps = cap_init();
+cap_set_flag(caps, CAP_INHERITABLE, num_caps, capList, CAP_SET);
+cap_set_flag(caps, CAP_EFFECTIVE, num_caps, capList, CAP_SET);
+cap_set_flag(caps, CAP_PERMITTED, num_caps, capList, CAP_SET);
+if(cap_set_proc(caps))printf("cap_set_proc error\n");
+cap_free(caps);
+ 
+ 
+cap_t newcaps = cap_from_text("cap_sys_admin=eip");
+ret = cap_set_proc(newcaps);
+if (ret) {
+        perror("cap_set_proc");
+        return -1;
+}
+cap_free(newcaps);
+
+
+常用caps:
+setcap cap_syslog=eip dmesg
+setcap cap_net_admin=eip /usr/sbin/ifconfig
+setcap cap_net_raw=eip ping(只需要p位是因为ping.c代码里调用了enable_capability_raw，设置了CAP_EFFECTIVE)
+ 
