@@ -1,0 +1,79 @@
+##二 限制上传
+因为上传对于服务器来说，是入站流量，因此只能通过Ingress qdisc来处理，但Ingress qdisc本身功能很弱，所以我们这里使用虚拟设备ifb来处理入站数据
+ 
+首先需要加载内核模块，启用虚拟网卡设备ifb0
+[root@test ~]# modprobe ifb
+[root@test ~]# ip link set dev ifb0 up
+ 
+然后对入站流量做设置，镜像到ifb0上
+[root@test ~]# tc qdisc add dev eth0 ingress
+[root@test ~]# tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
+ 
+然后我们就可以对ifb0接口的out方向流量做各种限制
+[root@test ~]# tc qdisc add dev ifb0 root handle 1: htb default 1
+[root@test ~]# tc class add dev ifb0 parent 1: classid 1:1 htb rate 800kbit ceil 800kbit burst 80k
+[root@test ~]# tc filter add dev ifb0 parent 1: prio 1 protocol ip u32 match ip dst 128.20.215.11 match ip dport 22 0xffff flowid 1:1
+               tc filter add dev ifb0 protocol ip parent 1:0 prio 1 u32 match ip src 192.168.10.141 flowid 1:10
+ 
+ 
+ 
+ 
+modprobe ifb numifbs=1
+ip link set dev ifb0 up
+tc qdisc del dev eth0 ingress 2>/dev/null
+tc qdisc add dev eth0 handle ffff: ingress rate 50kbit latency 50ms burst 1000 #err
+tc qdisc add dev eth0 handle ffff: ingress #ok
+tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
+#tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 flowid 1:1 action mirred egress redirect dev ifb0
+ 
+ 
+tc qdisc add dev ifb0 handle 1: root pfifo limit 2
+tc qdisc del dev ifb0 handle 1: root
+tc qdisc add dev eth0 root tbf rate 50kbit latency 50ms burst 1000
+ 
+modprobe ifb
+ip link set ifb0 up
+tc qdisc add dev ifb0 root sfq
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: u32 match u32 0 0 action mirred egress redirect dev ifb0
+ 
+ 
+ 
+ gcc -Wall -o client client.c -lpthread  
+ 
+ 
+ 
+modprobe ifb numifbs=1
+ip link set dev ifb0 up
+tc qdisc del dev eth1 ingress 2>/dev/null
+tc qdisc add dev eth1 handle ffff: ingress
+tc filter add dev eth1 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
+tc qdisc del dev ifb0 root
+tc qdisc add dev ifb0 root handle 1: prio
+ 
+ip link set dev ifb0 up txqueuelen 100
+ 
+ 
+modprobe ifb numifbs=1
+ip link set dev ifb0 up txqueuelen 2
+tc qdisc del dev eth0 ingress 2>/dev/null
+tc qdisc add dev eth0 handle ffff: ingress
+tc filter add dev eth0 parent ffff: protocol ip u32 match u32 0 0 action mirred egress redirect dev ifb0
+ 
+ 
+ 
+tc qdisc del dev eth0 ingress
+tc qdisc del dev eth0 root
+tc qdisc add dev eth0 ingress
+tc filter add dev eth0 parent ffff: protocol ip prio 50  u32 match ip src 0.0.0.0/0 police rate 2048kbps burst 1m drop flowid :1
+tc qdisc add dev eth0 root tbf rate 2048kbps latency 50ms burst 1m
+
+
+TOS字段的4个bit是如下定义的：
+二进制   十进制   意义
+-----------------------------------------
+1000          8            最小延迟 (md)
+0100          4            最大throughput (mt)
+0010          2            最大可靠性 (mr)
+0001          1           最小成本 (mmc)
+0000          0           正常服务
