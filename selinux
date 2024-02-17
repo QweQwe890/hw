@@ -66,4 +66,183 @@ sudo相关:
 2、继承unconfined­_t，不用配置额外策略，相关权限控制只由sudo决定
 3、脚本配置策略也是一样的，有域转换等概念
 
+允许执行chcon打标签:
+module myapp 1.0;
+type myapp_t;
+require{
+class file {relabelto getattr};
+class capability2{mac_admin};
+class filesystem{associate};
+type tmpfs_t;
+    type unconfined_t;
+};
+ 
+allow unconfined_t myapp_t:file relabelto;
+allow myapp_t tmpfs_t:filesystem associate;
+allow unconfined_t myapp_t:file getattr;
+ 
+ 
+ 
+这一行可以不用
+#allow unconfined_t self:capability2 mac_admin;
+ 
+ 
+cp /usr/share/selinux/devel/Makefile .
 
+访问证书:
+myreadcert.fc
+/cert/.*/a.txt         --      gen_context(system_u:object_r:mycert_t,s0)
+/myreadcert/myreadcert         gen_context(system_u:object_r:myreadcert_exec_t,s0) /普通用户
+ 
+myreadcert.te
+policy_module(myreadcert,1.0.0)
+type myreadcert_t;
+type myreadcert_exec_t;
+type mycert_t;
+ 
+require{
+    class file { getattr execute read open };
+    class filesystem { associate };
+    type unconfined_t;
+    type fs_t;
+    role unconfined_r;
+};
+ 
+role unconfined_r types myreadcert_t;
+role object_r types myreadcert_exec_t;
+ 
+domain_type(myreadcert_t)
+domain_entry_file(myreadcert_t, myreadcert_exec_t)
+domain_auto_trans(unconfined_t, myreadcert_exec_t, myreadcert_t)
+optional_policy(`
+          unconfined_domain(myreadcert_t)
+')
+ 
+allow unconfined_t mycert_t:file relabelto;
+allow mycert_t fs_t:filesystem associate;
+allow unconfined_t mycert_t:file getattr;
+ 
+allow myreadcert_t mycert_t:file { read open };
+ 
+ 
+ 
+myapp1.fc
+/myapp1/myapp1                   gen_context(system_u:object_r:myapp1_exec_t,s0)
+ 
+myapp1.te
+policy_module(myapp1,1.0.0)
+type myapp1_t;
+type myapp1_exec_t;
+ 
+require{
+    class file { getattr execute read open };
+    class filesystem { associate };
+    type unconfined_t;
+    type fs_t;
+    role unconfined_r;
+    type myreadcert_t;
+    type myreadcert_exec_t;
+};
+ 
+role unconfined_r types myapp1_t;
+role object_r types myapp1_exec_t;
+ 
+domain_type(myapp1_t)
+domain_entry_file(myapp1_t, myapp1_exec_t)
+domain_auto_trans(unconfined_t, myapp1_exec_t, myapp1_t)
+optional_policy(`
+          unconfined_domain(myapp1_t)
+')
+ 
+ 
+domain_auto_trans(myapp1_t, myreadcert_exec_t, myreadcert_t)
+
+docker:
+2、修改/etc/sysconfig/docker
+PTIONS='--live-restore --selinux-enabled'
+ 
+3、重启docker daemon服务
+systemctl restart docker
+ 
+4、启动docker
+docker import os_rootfs.tar.gz k64:v1  导入一个docker镜像
+ 
+docker run --rm -ti --security-opt=no-new-privileges k64:v1 pwd
+docker run -it --privileged k64:v1 /bin/bash 特权启动
+docker run -it  k64:v1 /bin/bash 非特权启动
+docker run --interactive --tty --security-opt label=level:TopSecret   k64:v1 /bin/bash
+ 
+docker attach 794cfc0ad6d7  进入  794cfc0ad6d7这个docker进程
+docker exec d1434e11cf62 -it  往d1434e11cf62执行命令
+docker kill d1434e11cf62  杀掉对应的docker进程
+docker ps 查看当前板子起了哪些docker进程
+docker cp libmyread.so mad_carson:/tmp/ 往docker里拷文件
+ 
+/var/lib/docker/hooks/docker_security.sh
+ 
+docker images
+可以看到列出来的可用容器镜像s
+看IMAGE ID那一列
+docker run -ti f23155f10b22 /bin/bash
+docker run -ti f23155f10b22 /bin/bash
+这里的f23155f10b22就是IMAGE ID
+进入容器后要退出就按Ctrl+p q
+ 
+docker run -tid -v /home:/test,Z k64:v1 touch /test/aaa
+ 
+5、cat /etc/selinux/targeted/contexts/lxc_contexts
+process = "system_u:system_r:svirt_lxc_net_t:s0"
+content = "system_u:object_r:virt_var_lib_t:s0"
+file = "system_u:object_r:svirt_sandbox_file_t:s0"
+sandbox_kvm_process = "system_u:system_r:svirt_qemu_net_t:s0"
+sandbox_kvm_process = "system_u:system_r:svirt_qemu_net_t:s0"
+sandbox_lxc_process = "system_u:system_r:svirt_lxc_net_t:s0"
+ 
+6、docker传入label
+docker run -it --security-opt label=label=type:svirt_lxc_net_t k64:v1 /bin/bash
+#docker run -it --security-opt label=label=type:ffffffffff k64:v1 /bin/bash
+ 
+7、runcon查看label
+runcon
+system_u:system_r:svirt_lxc_net_t:s0:c614,c869
+ 
+system_u:system_r:svirt_lxc_net_t:s0:
+ 
+ 
+docker run -itd -v /dfs:/dfs:rw,shared 898944d92f36touch /dfs/aa
+docker run -tid -v /docker:/test:Z c5140aa500a9 /bin/bash
+docker run -tid -v /docker:/test:z c5140aa500a9 touch /test/aaa
+ 
+z：容器共享，OS被挂载的目录标签会被修改
+Z：容器独享，OS被挂载的目录标签会被修改
+不加参数，OS被挂载的目录标签不修改，容器里的目录标签也跟外面的一样，所以可能会导致容器内无法访问该目录
+
+策略语言:
+域转换：
+allow unconfined_t myapp_exec_t : file {getattr execute read open };
+#允许shell（unconfined_t）对myapp（myapp_exec_t）具有系统调用、获取属性等权限
+ 
+allow myapp_t myapp_exec_t : file entrypoint;
+#此规则提供对passwd_t 域的entrypoint访问权限，该权限用于转换到新的域类型
+ 
+allow unconfined_t myapp_t : process transition;
+#此权限需要允许改变一个进程的上下文。通过这种允许的域转换，原始类型 (unconfined_t)必须需要TRansition 权限转换到新的类型(myapp_t)。
+ 
+type_transition unconfined_t myapp_exec_t : process myapp_t; 
+#如果调用进程的域类型是unconfined_t 并且可执行文件的类型是myapp_exec_t, 将发生到新域类型 (myapp_t)的域转换。
+#type_transition 规则导致在默认时的域转换，但并不是允许。必须仍然提供上述的三种访问需求才可发生域转换，这与是否默认或用户是否明确请求无关。
+ 
+dontaudit unconfined_t myapp_t : process {noatsecure siginh rlimitinh};
+allow myapp_t unconfined_t : process { sigchld };
+ 
+ 
+noatsecure许可使内核在进行域转换时不设置glibc的安全模式，在安全模式下，glibc清除进程环境，包括相当多的环境变量，如LD_PRELOAD，如果不清除环境，源域可能会控制目标域的关键部分，当域转换进入更高特权域时，允许noatsecure许可是特别危险的。
+ 
+只有root可以加载模块，普通用户会失败：
+$ semodule -i myreadcert.pp
+libsemanage.semanage_create_store: Could not read from module store, active modules subdirectory at /etc/selinux/targeted/active/modules. (Permission denied).
+libsemanage.semanage_direct_connect: could not establish direct connection (Permission denied).
+semodule:  Could not connect to policy handler
+
+audit log详解:
+https://wiki.gentoo.org/wiki/SELinux/Tutorials/Where_to_find_SELinux_permission_denial_details
