@@ -1,2 +1,16 @@
 1、git log / diff乱码问题： 
 git config --global core.pager "less -r"
+
+2. fork + git remote add:
+git push -u klp tmp:aa/tmp
+git push -u <remote_name> <local_branch_name>:<remote_branch_name> -f
+
+
+git merge <remote_upstream_name>
+
+git branch --contains $COMMIT_ID
+
+git name-rev COMMIT_ID
+
+
+git log --pretty=fuller
