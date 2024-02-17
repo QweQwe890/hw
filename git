@@ -1,0 +1,2 @@
+1、git log / diff乱码问题： 
+git config --global core.pager "less -r"
