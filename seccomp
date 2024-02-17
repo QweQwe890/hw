@@ -1,0 +1,41 @@
+https://veritas501.space/2018/05/05/seccomp%E5%AD%A6%E4%B9%A0%E7%AC%94%E8%AE%B0/
+ 
+只拦截哪些length等于0x10的write系统调用,可以这样写:
+#include <unistd.h>
+#include <seccomp.h>
+#include <linux/seccomp.h>
+ 
+int main(void){
+         scmp_filter_ctx ctx;
+         ctx = seccomp_init(SCMP_ACT_ALLOW);
+         seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(write),1,SCMP_A2(SCMP_CMP_EQ,0x10));//第2(从0)个参数等于0x10
+         seccomp_load(ctx);
+         write(1,"i will give you a shell\n",24);//不被拦截
+         write(1,"1234567812345678",0x10);//被拦截
+         return 0;
+}
+ 
+ 
+通过seccomp禁用掉execve的syscall.
+//gcc -g simple_syscall_seccomp.c -o simple_syscall_seccomp -lseccomp
+#include <unistd.h>
+#include <seccomp.h>
+#include <linux/seccomp.h>
+ 
+int main(void){
+         scmp_filter_ctx ctx;
+         ctx = seccomp_init(SCMP_ACT_ALLOW);
+         seccomp_rule_add(ctx, SCMP_ACT_KILL, SCMP_SYS(execve), 0);
+         seccomp_load(ctx);
+ 
+         char * filename = "/bin/sh";
+         char * argv[] = {"/bin/sh",NULL};
+         char * envp[] = {NULL};
+         write(1,"i will give you a shell\n",24);
+         syscall(59,filename,argv,envp);//execve
+         return 0;
+}
+ 
+结论：
+1、fork子进程也会继承seccomp
+2、代码执行到禁用的系统调用就直接退出，不会往下执行
