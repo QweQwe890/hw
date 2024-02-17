@@ -1,0 +1,54 @@
+ifconfig eth1 up
+ifconfig eth2 up
+rmmod bonding
+modprobe bonding mode=1                                       arp_interval=100
+ifconfig bond0 12.34.34.135 netmask 255.255.255.0
+ifenslave bond0 eth1 eth0
+cat /proc/net/bonding/bond0
+ 
+ifconfig eth1 down
+ 
+ifenslave -c bond0 eth1
+ 
+service network restart
+ 
+ifconfig eth1 hw ether fa:16:3e:35:13:fc
+ifconfig eth1 hw ether 00:0C:18:EF:FF:ED
+ 
+ifconfig eth1 up
+ifconfig eth2 down
+ifocnfig bond0 up
+ifocnfig bond0 12.34.34.135
+ifenslave bond0 eth1
+ifenslave bond0 eth2
+ 
+cat /proc/net/bonding/bond0
+ 
+ping 12.34.34.45
+ 
+ 
+modprobe bonding mode=1 miimon=100 arp_interval=100 arp_validate=all
+ 
+ 
+40G网卡ok：
+ifconfig eth1 up
+ifconfig eth2 up
+modprobe bonding mode=1 miimon=100
+ifconfig bond0 123.123.123.232 netmask 255.255.255.0
+ifenslave bond0 eth1 eth2
+cat /proc/net/bonding/bond0
+ 
+ssh root@123.123.123.214
+ 
+ 
+ 
+10G网卡ok：
+rmmod bonding
+ifconfig eth3 up
+ifconfig eth4 up
+modprobe bonding mode=1 miimon=100
+ifconfig bond0 124.124.124.232 netmask 255.255.255.0
+ifenslave bond0 eth3 eth4
+cat /proc/net/bonding/bond0
+ 
+ssh root@124.124.124.178
