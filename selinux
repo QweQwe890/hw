@@ -1,0 +1,7 @@
+1. selinux config:
+/etc/selinux/config
+SELINUX=permissive
+
+2. cmdline add "selinux=1"
+3. touch /.autorelabel
+4. reboot
