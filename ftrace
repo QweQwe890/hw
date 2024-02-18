@@ -1,0 +1,149 @@
+ftrace
+
+debugfs
+mount -t debugfs none /sys/kernel/debug
+mount -t tracefs tracefs /sys/kernel/tracing
+mount -t tmpfs tmpfs /tmp
+
+kprobe
+Set a probe:
+/sys/kernel/debug/tracing # echo p kernel_clone > kprobe_events
+echo p cmdline_proc_show > kprobe_events
+
+Set a return probe
+/sys/kernel/debug/tracing # echo r kernel_clone >> kprobe_events
+
+enable kprobe event:
+/sys/kernel/debug/tracing # echo 1 > events/kprobes/p_kernel_clone_0/enable
+/sys/kernel/debug/tracing # echo 1 > events/kprobes/r_kernel_clone_0/enable
+/sys/kernel/debug/tracing # echo 1 > tracing_on
+
+enable stacktrace:
+/sys/kernel/debug/tracing # echo stacktrace > trace_options
+
+/sys/kernel/debug/tracing # cat kprobe_events
+r10:kprobes/r_kernel_clone_0 kernel_clone
+p:kprobes/p_kernel_clone_0 kernel_clone
+
+disable kprobe events
+/sys/kernel/debug/tracing # echo 0 > events/kprobes/p_kernel_clone_0/enable
+/sys/kernel/debug/tracing # cat kprobe_events
+r10:kprobes/r_kernel_clone_0 kernel_clone
+p:kprobes/p_kernel_clone_0 kernel_clone
+/sys/kernel/debug/tracing # echo 0 > events/kprobes/r_kernel_clone_0/enable
+/sys/kernel/debug/tracing # cat kprobe_events
+r10:kprobes/r_kernel_clone_0 kernel_clone
+p:kprobes/p_kernel_clone_0 kernel_clone
+
+Clear a probe
+/sys/kernel/debug/tracing # echo -:p_kernel_clone_0 >> kprobe_events
+/sys/kernel/debug/tracing # echo -:r_kernel_clone_0 >> kprobe_events
+
+instances
+create instances:
+ # mkdir instances/foo
+ # mkdir instances/bar
+ # mkdir instances/zoot
+ # echo 100000 > buffer_size_kb
+ # echo 1000 > instances/foo/buffer_size_kb
+ # echo 5000 > instances/bar/per_cpu/cpu1/buffer_size_kb
+ # echo function > current_trace
+ # echo 1 > instances/foo/events/sched/sched_wakeup/enable
+ # echo 1 > instances/foo/events/sched/sched_wakeup_new/enable
+ # echo 1 > instances/foo/events/sched/sched_switch/enable
+ # echo 1 > instances/bar/events/irq/enable
+ # echo 1 > instances/zoot/events/syscalls/enable
+
+uprobe
+RBWRITE_FETCHARG1=""
+case "$(uname -m)" in
+	x86_64)    RBWRITE_FETCHARG1="%di";;
+	i386|i686) RBWRITE_FETCHARG1="%ax";;
+	arm)       RBWRITE_FETCHARG1="%r0";;
+	aarch64)   RBWRITE_FETCHARG1="%x0";;
+	*)         echo "$0: Unsupported CPU architecture"; exit 1;;
+esac
+RBWRITE_PATH=/usr/bin/rbwrite
+RBWRITE_OFFSET=$(nm $RBWRITE_PATH | grep rbwrite | awk '{print $1}')
+
+echo "p:rbdetonate/rbwrite $RBWRITE_PATH:0x$RBWRITE_OFFSET \
+      input=+0($RBWRITE_FETCHARG1):string head=+0($RBWRITE_FETCHARG1):s8" >> $UPROBE_EVENTS
+
+perf注册一个事件和中断回调：hardlockup_detector_event_create
+
+
+linux:https://www.zhihu.com/column/c_1108400140804726784
+中断：https://zhuanlan.zhihu.com/p/83709066
+
+module
+
+rmmod
+rmmod的系统调用为delete_module(kernel/module.c)
+
+param
+ 定义模块参数：
+static int sleep_secs;
+module_param(sleep_secs, int, 0644);
+MODULE_PARM_DESC(sleep_secs, "sleep_secs (default=0)");
+
+
+
+livepatch
+
+ftrace ops是插在链表头的，所以后注册的handler会先执行，
+先注册function handler，再注册热补丁handle，被打补丁的调用只会记录一条日志；
+先注册热补丁handler，再注册function handler，被打补丁的调用日志会记录两条，因为用kpatch做出来的函数是同名的，两个函数都会执行handler
+function handler和热补丁handler都会执行到，因为function trace只记录日志，没有修改寄存器，所以两者并不冲突；
+但是function graph和热补丁都会修改寄存器，所以后注册的有效；
+
+
+
+
+
+ftrace
+kernel/trace/trace_functions.c
+static struct tracer function_trace __tracer_
+
+ftrace_ops_list
+
+kernel/trace/trace_functions.c
+static struct tracer function_trace __tracer_
+
+function trace
+kernel/trace/trace_functions.c
+static struct tracer function_trace __tracer_data =       
+{                                                         
+        .name           = "function",                     
+        .init           = function_trace_init,            ->select_trace_function -> function_trace_call
+        .reset          = function_trace_reset,           
+        .start          = function_trace_start,           
+        .flags          = &func_flags,                    
+        .set_flag       = func_set_flag,                  
+        .allow_instances = true,                          
+#ifdef CONFIG_FTRACE_SELFTEST                             
+        .selftest       = trace_selftest_startup_function,
+#endif                                                    
+};                                                        
+
+function_graph trace
+kernel/trace/trace_functions_graph.c
+static struct tracer graph_trace __tracer_data = {              
+        .name           = "function_graph",                     
+        .update_thresh  = graph_trace_update_thresh,            
+        .open           = graph_trace_open,                     
+        .pipe_open      = graph_trace_open,                     
+        .close          = graph_trace_close,                    
+        .pipe_close     = graph_trace_close,                    
+        .init           = graph_trace_init,          -> register_ftrace_graph -> static struct fgraph_ops funcgraph_ops = {
+                                                                                                            .entryfunc = &trace_graph_entry,  
+                                                                                                            .retfunc = &trace_graph_return,   
+                                                                                                         };           
+        .reset          = graph_trace_reset,                    
+        .print_line     = print_graph_function,                 
+        .print_header   = print_graph_headers,                  
+        .flags          = &tracer_flags,                        
+        .set_flag       = func_graph_set_flag,                  
+#ifdef CONFIG_FTRACE_SELFTEST                                   
+        .selftest       = trace_selftest_startup_function_graph,
+#endif                                                          
+};                                                                                                                   
