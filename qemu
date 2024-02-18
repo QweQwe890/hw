@@ -7,3 +7,412 @@ grub2-editenv list
 
 make modules_prepare
 
+
+arm:
+kernel:
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm vexpress_defconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm menuconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm
+
+
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/stable_arm32 vexpress_defconfig
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/stable_arm32 menuconfig
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/stable_arm32 -j8
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm32
+
+perf:
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabihf-
+make clean
+make LDFLAGS=-static NO_JVMTI=1 perf
+
+sudo qemu-system-arm -M vexpress-a9 -m 512M -smp 4 -kernel arch/arm/boot/zImage -dtb arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects_hulk/qemu/rootfs/arm/busybox-1.33.1/rootfs.ext3
+
+ubuntu ok:
+sudo qemu-system-arm -M vexpress-a9 -m 1g -smp 4 -kernel arch/arm/boot/zImage -dtb arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects/qemu/rootfs/arm32le/rootfs.img -net nic -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-device,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-arm -M vexpress-a9 -m 512M -smp 4 -kernel arch/arm/boot/zImage -dtb arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm32le/rootfs.img -net nic -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-device,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ebpf arm32:
+sudo qemu-system-arm -M vexpress-a9 -m 1g -smp 1 -kernel arch/arm/boot/zImage -dtb arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects/qemu/rootfs/arm32le/rootfs.img -net nic -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-device,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ssh root@127.0.0.1 -p 10021
+
+sudo qemu-system-arm -M vexpress-a9 -m 1g -smp 1 -kernel zImage -dtb vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects/qemu/rootfs/arm32le/rootfs.img -net nic -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-device,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+armeb
+
+kernel:
+export PATH=$PATH:/home/aa/projects_hulk/gcc/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi/bin
+export ARCH=arm
+export CROSS_COMPILE=arm-linux-gnueabi-
+
+
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm vexpress_defconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_armeb
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_armeb
+
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm vexpress_defconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk4.4_armeb
+make CROSS_COMPILE=arm-linux-gnueabi- ARCH=arm -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk4.4_armeb
+
+
+
+make vexpress_defconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_armeb$
+make menuconfig  -j8 O=/home/aa/projects_hulk/qemu/kernel/armeb
+System Type-> Enable the L2x0 outer cache controller ，或搜索 CACHE_L2X0
+make -j8 O=/home/aa/projects_hulk/qemu/kernel/armeb
+
+
+
+busybox:
+make defconfig
+make menuconfig
+#   勾选 Busybox Setting-> Build Options-> [*] Build static binary (no shared libs)    或者 搜索 CONFIG_STATIC
+make CROSS_COMPILE=arm-linux-gnueabi- -j8
+make install CROSS_COMPILE=arm-linux-gnueabi-
+
+sudo qemu-system-arm -M vexpress-a9 -m 512M -smp 4 -kernel arch/arm/boot/zImage -dtb arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd /home/aa/projects_hulk/qemu/rootfs/arm/busybox-1.33.1/rootfs.ext3
+
+
+qemu-system-arm -M vexpress-a9 -m 512m -kernel <linux-dir>/arch/arm/boot/zImage -dtb <linux-dir>/arch/arm/boot/dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 console=ttyAMA0"  -sd rootfs.ext3
+
+qemu-system-arm -M vexpress-a9 -m 512M -kernel zImage -dtb dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw rootfstype=ext4 rw console=ttyAMA0 init=/linuxrc" -initrd ../../../../../rootfs/ramdisk.gz
+qemu-system-arm -M vexpress-a9 -m 512M -kernel zImage -dtb dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0 init=/linuxrc" -sd ../../../../../rootfs/armeb/busybox-1.33.1/rootfs.ext3
+
+
+qemu-system-arm -M vexpress-a9 -m 512M -kernel zImage -dtb dts/vexpress-v2p-ca9.dtb -nographic -append "root=/dev/mmcblk0 rw console=ttyAMA0" -sd ../../../../../rootfs/arm/busybox-1.33.1/rootfs.ext3
+
+
+
+
+make menuconfig O=/home/aa/projects_hulk/qemu/kernel/armeb
+make savedefconfig O=/home/aa/projects_hulk/qemu/kernel/armeb
+make -j8 O=/home/aa/projects_hulk/qemu/kernel/armeb
+make dtbs -j8 O=/home/aa/projects_hulk/qemu/kernel/armeb
+
+make -j8 zImage O=/home/aa/projects_hulk/qemu/kernel/armeb
+make -j8 modules O=/home/aa/projects_hulk/qemu/kernel/armeb
+
+perf
+make LDFLAGS=-static NO_JVMTI=1 perf
+
+x86:
+kernel:
+make mrproper
+make O=/home/aa/projects_hulk/qemu/kernel/hulk4.4_x86 defconfig
+make O=/home/aa/projects_hulk/qemu/kernel/hulk4.4_x86 menuconfig
+make O=/home/aa/projects_hulk/qemu/kernel/hulk4.4_x86  -j8
+
+make O=/home/aa/projects_hulk/qemu/kernel/stable_x86 defconfig
+make O=/home/aa/projects_hulk/qemu/kernel/stable_x86 menuconfig
+make O=/home/aa/projects_hulk/qemu/kernel/stable_x86  -j8
+
+make O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_x86 defconfig
+make O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_x86 menuconfig
+make O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_x86 -j8
+
+make O=/home/aa/projects_hulk/qemu/kernel/hulk4.18_x86 menuconfig
+
+make O=/home/aa/projects_hulk/qemu/kernel/openeuler5.10_x86 defconfig
+
+sudo qemu-system-x86_64  -smp 2 -m 1024M -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw rootfstype=ext4 console=ttyS0" -initrd /home/aa/projects_hulk/qemu/rootfs/x86/busybox-1.33.1/x86_rootfs_ext4.img
+#sudo qemu-system-x86_64  -smp 2 -m 1024M -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw rootfstype=ext4 console=ttyS0" -initrd /home/aa/projects/qemu/rootfs/busybox/x86/busybox-1.33.1/x86_rootfs_ext4.img
+
+#sudo qemu-system-x86_64  -smp 2 -m 1024M -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw rootfstype=ext4 console=ttyS0" -drive file=/home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/ubuntu-i386.img,format=raw -netdev user,id=ndev.0,hostfwd=tcp::5555-:22 -device e1000,netdev=ndev.0
+
+ok:
+sudo qemu-system-x86_64 -m 4096 -smp 4 -no-reboot -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs_x86_64.ext4 -snapshot -kernel arch/x86/boot/bzImage --nographic -append "earlyprintk=serial oops=panic nmi_watchdog=panic panic =1 ftrace_dump_on_oops=orig_cpu rodata=n vsyscall=native net.ifnames=0 biosdevname=0 root=/dev/sda console=ttyS0"
+
+sudo qemu-system-x86_64 -m 4096 -smp 4 -no-reboot -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img -snapshot -kernel arch/x86/boot/bzImage --nographic -append "earlyprintk=serial net.ifnames=0 biosdevname=0 root=/dev/sda console=ttyS0" -fsdev 
+local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ubuntu perfect:
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ubuntu perfect new rootfs:
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs_ubuntu2204.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ssh root@127.0.0.1 -p 10021
+
+ebpf
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10022-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_hulk -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/bmc/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/bmc -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+
+ubuntu18:
+sudo qemu-system-x86_64 -smp 4 -m 1024M -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-x86_64 -smp 2 -m 4096M -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare -cpu Haswell
+
+scp -P 10021 -i /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/linux.id_rsa perf root@127.0.0.1:/
+ssh root@127.0.0.1 -p 10021 -i /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/linux.id_rsa
+
+enable-kvm:
+sudo qemu-system-x86_64 -smp 4 -m 1024M -kernel bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/tmp -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare -cpu host --enable-kvm
+
+new vm:
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86/rootfs_ubuntu2204.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare -S -s
+
+new 160cores:
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs_ubuntu2204.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+
+
+ssh root@127.0.0.1 -p 10022 -i linux.id_rsa
+
+ssh root@127.0.0.1 -p 10021 -i linux.id_rsa
+
+
+ifconfig eth0 10.0.2.15 netmask 255.255.255.0
+ifconfig eth0 up
+route add default gw 10.0.2.2
+
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000
+
+virtio:
+CONFIG_NET_9P=y
+CONFIG_9P_FS=y
+CONFIG_VIRTIO_PCI=y
+CONFIG_NET_9P_VIRTIO=y
+CONFIG_9P_FS_POSIX_ACL=y
+CONFIG_NET_9P_DEBUG=y (Optional可选)
+mount -t 9p -o trans=virtio,version=9p2000.L hostshare /tmp/host_files
+
+ubuntu ok:
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 
+
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -net user,hostfwd=tcp::10021-:22 -net nic,model=e1000
+
+
+qemu -net nic,model=virtio,macaddr=52:54:00:11:22:33 -net tap,ifname=tap0,script=no,downscript=no
+-net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000
+
+sudo qemu-system-x86_64 -smp 8 -m 12G -kernel ./arch/x86_64/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0" -hda /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs.img  -netdev user,id=mynet -device virtio-net-pci,netdev=mynet,hostfwd=tcp::2222-:22
+
+
+#qemu-system-x86_64 -m 2G -smp 4 bzImage -append "console=ttyS0 root=/dev/sda earlyprintk=serial net.ifnames=0" -drive file=stretch.img,format=raw -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -nographic
+
+x86_32:
+
+make ARCH=i386 O=/home/aa/projects_hulk/qemu/kernel/stable_x86_32 defconfig
+make ARCH=i386 O=/home/aa/projects_hulk/qemu/kernel/stable_x86_32 menuconfig
+make ARCH=i386 O=/home/aa/projects_hulk/qemu/kernel/stable_x86_32  -j8
+
+sudo qemu-system-i386 -smp 1 -m 4096M -kernel ./arch/x86/boot/bzImage -nographic -append "root=/dev/sda rw console=ttyS0 earlyprintk=serial net.ifnames=0" -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/x86_32/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+cat /etc/init.d/network
+#! /bin/sh
+
+### BEGIN INIT INFO
+# Provides:             sshd
+# Required-Start:       $remote_fs $syslog
+# Required-Stop:        $remote_fs $syslog
+# Default-Start:        2 3 4 5
+# Default-Stop:
+# Short-Description:    OpenBSD Secure Shell server
+### END INIT INFO
+
+set -e
+
+ifconfig eth0 10.0.2.15 netmask 255.255.255.0
+ifconfig eth0 up
+route add default gw 10.0.2.2
+mount -t 9p -o trans=virtio,version=9p2000.L hostshare /root/projects
+exit 0
+
+chmod 755 /etc/init.d/network
+cd /etc/rc5.d
+ln -s ../init.d/network S01network
+
+
+arm64:
+kernel:
+make ARCH=arm64 mrproper
+#cp ./arch/arm64/configs/defconfig  .config
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm64 defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm64 menuconfig
+	General setup  --->
+	    [*] Initial RAM filesystem and RAM disk (initramfs/initrd) support
+	 
+	Device Drivers  --->
+	    [*] Block devices  --->
+	        <*>   RAM block device support
+	        (65536) Default RAM disk size (kbytes)
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm64 Image -j8
+make LDFLAGS=-static NO_JVMTI=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- perf
+
+
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/stable_arm64 menuconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/stable_arm64 Image -j8
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/openeuler4.19_arm64 defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/openeuler4.19_arm64 Image -j8
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk4.18_arm64 defconfig
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk4.18_arm64 Image -j8
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_arm64 Image -j8
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/hulk6.6_arm64 openeuler_defconfig
+
+busybox:
+make defconfig
+make menuconfig
+#   勾选 Busybox Setting-> Build Options-> [*] Build static binary (no shared libs)    或者 搜索 CONFIG_STATIC
+make CROSS_COMPILE=aarch64-linux-gnu- -j8
+make install CROSS_COMPILE=aarch64-linux-gnu-file perf/perf
+
+
+qemu-system-aarch64 -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda console=ttyAMA0 rootfstype=ext4 init=/linuxrc rw" -m 2048M -smp 4  -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/arm64/busybox-1.33.1/arm64_rootfs_ext4.img
+
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- O=/home/aa/projects_hulk/qemu/kernel/arm64 perf -j8
+
+ubuntu perfect:
+
+sudo qemu-system-aarch64 -smp 4 -m 8G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyS0 net.ifnames=0" -M virt -cpu cortex-a57 -hda /home/aa/projects/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ssh root@127.0.0.1 -p 10021 -i /home/aa/projects/qemu/rootfs/ubuntu/arm64/linux.id_rsa
+
+sudo qemu-system-aarch64 -smp 4 -m 2G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyS0 net.ifnames=0" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-aarch64 -smp 4 -m 2G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyS0 net.ifnames=0 nmi_watchdog=1 pmu_nmi_enable hardlockup_cpu_freq=auto irqchip.gicv3_pseudo_nmi=1 disable_sdei_nmi_watchdog hardlockup_enable=1" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+
+如果启动后没有eth0网口，内核需要打开E1000网卡驱动的宏
+如果加载文件系统失败，内核需要打开VIRTIO_BLOCK的宏VIRTIO_BLK
+
+sudo qemu-system-aarch64 -smp 8 -m 4G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyAMA0 earlycon=pl011,0x9000000 net.ifnames=0" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-aarch64 -smp 4 -m 2G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyAMA0 net.ifnames=0 nmi_watchdog=1 pmu_nmi_enable hardlockup_cpu_freq=auto irqchip.gicv3_pseudo_nmi=1 disable_sdei_nmi_watchdog hardlockup_enable=1" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ssh root@127.0.0.1 -p 10021 -i /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/linux.id_rsa
+scp -i /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/linux.id_rsa -P 10021 test.ko root@127.0.0.1:/
+
+
+sudo qemu-system-aarch64 -smp 4 -m 2G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyAMA0 net.ifnames=0 nmi_watchdog=1 pmu_nmi_enable hardlockup_cpu_freq=auto irqchip.gicv3_pseudo_nmi=1 disable_sdei_nmi_watchdog hardlockup_enable=1" -M virt,gic-version=3  -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+new vm olk6.6 enable hardlockup:
+
+sudo qemu-system-aarch64 -smp 4 -m 2G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyS0 net.ifnames=0 nmi_watchdog=1 irqchip.gicv3_pseudo_nmi=1" -M virt,gic-version=3  -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_hulk -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+new vm:
+sudo qemu-system-aarch64 -smp 4 -m 8G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyAMA0 net.ifnames=0" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+sudo qemu-system-aarch64 -smp 4 -m 8G -kernel arch/arm64/boot/Image -nographic -append "root=/dev/vda rw console=ttyS0 net.ifnames=0" -M virt -cpu cortex-a57 -hda /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/rootfs.img  -net user,host=10.0.2.10,hostfwd=tcp:127.0.0.1:10021-:22 -net nic,model=e1000 -fsdev local,security_model=passthrough,id=fsdev0,path=/home/aa/projects_linux -device virtio-9p-pci,id=fs0,fsdev=fsdev0,mount_tag=hostshare
+
+ssh root@127.0.0.1 -p 10021 -i /home/aa/projects_hulk/qemu/rootfs/ubuntu/arm64/linux.id_rsa.pub
+
+ssh root@127.0.0.1 -p 10021
+
+mips64el
+kernel:
+make ARCH=mips mrproper
+make ARCH=mips CROSS_COMPILE=mips64el-linux-gnuabi64- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_mips64el malta_defconfig
+make ARCH=mips CROSS_COMPILE=mips64el-linux-gnuabi64- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_mips64el menuconfig
+Endianness selection (Little endian)  --->
+	(X) Little endian
+CPU selection  --->
+	CPU type (MIPS64 Release 6)  --->
+    		(X) MIPS64 Release 6
+Kernel type  --->
+	Kernel code model (64-bit kernel)  --->
+    		(X) 64-bit kernel
+make ARCH=mips CROSS_COMPILE=mips64el-linux-gnuabi64- O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_mips64el -j8
+
+buildroot:
+make qemu_mips64r6el_malta_defconfig
+make menuconfig
+Target options  --->
+	Target Architecture (MIPS (little endian))  --->
+    		(X) MIPS (little endian)
+	Target Architecture Variant (Generic MIPS64R6)  --->
+    		(X) Generic MIPS64R6
+Toolchain  --->
+	C library (glibc)  --->
+    		(X) glibc
+	Kernel Headers (Linux 5.10.x kernel headers)  --->
+    		(X) Linux 5.10.x kernel headers    ---  选择与内核对应的版本
+Kernel  --->
+	[ ] Linux Kernel
+
+打开宏：CONFIG_DEVTMPFS_MOUNT
+
+perf: 
+make ARCH=mips CROSS_COMPILE="/home/aa/projects_hulk/qemu/rootfs/mips64el/buildroot-2021.08.1/output/host/bin/mips64el-buildroot-linux-gnu-" O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_mips64el LD="/home/aa/projects_hulk/qemu/rootfs/mips64el/buildroot-2021.08.1/output/host/bin/mips64el-buildroot-linux-gnu-ld -m elf64ltsmip" perf
+
+
+buildroot:
+make qemu_mips64r6_malta_defconfig
+make menuconfig
+Target options  --->
+	Target Architecture (MIPS (little endian))  --->
+    		(X) MIPS (little endian)
+	Target Architecture Variant (Generic MIPS64R6)  --->
+    		(X) Generic MIPS64R6
+Toolchain  --->
+	C library (glibc)  --->
+    		(X) glibc
+	Kernel Headers (Linux 5.10.x kernel headers)  --->
+    		(X) Linux 5.10.x kernel headers    ---  选择与内核对应的版本
+Kernel  --->
+	[ ] Linux Kernel
+
+sudo qemu-system-mips64el -nographic -m size=1024M -M malta -cpu I6500 -smp 2 -device virtio-keyboard-pci -kernel vmlinux  -drive file=/home/aa/projects_hulk/qemu/rootfs/mips64el/buildroot-2021.08.1/output/images/rootfs.ext2,format=raw -append "root=/dev/sda console=ttyS0"
+
+
+ppc64be:
+kernel:
+make CROSS_COMPILE=/home/aa/projects_hulk/qemu/gcc/hcc_ppcbe_hard/bin/powerpc64-linux-gnu- ARCH=powerpc ppc64_defconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_ppc64be
+make CROSS_COMPILE=/home/aa/projects_hulk/qemu/gcc/hcc_ppcbe_hard/bin/powerpc64-linux-gnu- ARCH=powerpc menuconfig -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_ppc64be
+make CROSS_COMPILE=/home/aa/projects_hulk/qemu/gcc/hcc_ppcbe_hard/bin/powerpc64-linux-gnu- ARCH=powerpc  -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_ppc64be
+
+cd /home/aa/projects_hulk/qemu/rootfs/ppc64be/rootfs
+find . | cpio -o -H newc > ../rootfs.cpio
+cd ..
+gzip rootfs.cpio
+
+sudo qemu-system-ppc64 -M pseries -m 2G -nographic -smp 4,cores=1 -vga none -kernel vmlinux -initrd /home/aa/projects_hulk/qemu/rootfs/ppc64be/rootfs.cpio.gz
+
+
+
+
+ppc32:
+kernel:
+make CROSS_COMPILE=powerpc-linux-gnu- ARCH=powerpc  -j8 O=/home/aa/projects_hulk/qemu/kernel/hulk5.10_ppc32
+
+sudo qemu-system-ppc -m 2G -M ppce500 -cpu e500mc -kernel arch/powerpc/boot/uImage -drive file=/home/aa/projects_hulk/qemu/rootfs/ppc32/rootfs_ppc32.ext2,if=virtio,format=raw -nographic  -append "console=ttyS0 root=/dev/vda rw"  -netdev tap,id=nfs-net,ifname=nfs-tap,script=no,downscript=no -device virtio-net,netdev=nfs-net
+
+sudo apt install libvirt-bin libvirt-daemon
+service libvirtd start
+sudo tunctl -t nfs-tap -u yjh
+ifconfig nfs-tap up
+sudo brctl addif virbr0 nfs-tap
+
+
+
+riscv:
+#cp arch/riscv/configs/defconfig .config
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- O=/home/aa/projects/qemu/kernel/stable_riscv defconfig
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- O=/home/aa/projects/qemu/kernel/stable_riscv menuconfig
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- O=/home/aa/projects/qemu/kernel/stable_riscv Image -j16
+
+qemu-system-riscv64 -M virt -m 256M -nographic -kernel /home/aa/projects/qemu/kernel/stable_riscv/arch/riscv/boot/Image -drive file=/home/aa/projects/qemu/rootfs/busybox/riscv/busybox-1.33.1/rootfs.img,format=raw,id=hd0  -device virtio-blk-device,drive=hd0 -append "root=/dev/vda rw console=ttyS0"
+
+export ARCH=riscv
+export CROSS_COMPILE=riscv64-linux-gnu-
+make clean
+make LDFLAGS=-static NO_JVMTI=1 perf
+
+
+
+
+
+
+
+sudo e2fsck /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs_ubuntu2204.img -y
+fsck.ext4 rootfs.img
+
+echo 1 > /proc/sys/kernel/panic_on_oops
