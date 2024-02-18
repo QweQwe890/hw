@@ -1,2 +1,222 @@
 ./FlameGraph/stackcollapse-perf.pl perf.unfold > perf.folded
 ./FlameGraph/flamegraph.pl perf.folded > perf.svg
+
+spe:
+perf/perf record -e arm_spe_0/branch_filter=1,ts_enable=1,pa_enable=1,load_filter=1,jitter=1,store_filter=1,min_latency=0/ -a sleep 1
+
+make perf:
+make perf
+make LDFLAGS=-static NO_JVMTI=1 perf
+
+make with debuginfo:
+make EXTRA_CFLAGS=-g -j16
+
+arm64:
+make ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- perf -j8
+make  LDFLAGS=-static NO_LIBTRACEEVENT=1 NO_LIBUNWIND=1 NO_LIBPYTHON=1 NO_LIBCRYPTO=1 NO_LIBELF=1 ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu- perf -j8
+
+armle:
+make ARCH=arm CROSS_COMPILE=/gcc/gcc-linaro-7.4.1-2019.02-x86_64_arm-linux-gnueabi/bin/arm-linux-gnueabi- perf -j8
+make ARCH=arm CROSS_COMPILE=arm-linux-gnueabi- perf -j8
+
+armbe:
+make ARCH=arm CROSS_COMPILE=/gcc/gcc-linaro-7.3.1-2018.05-x86_64_armeb-linux-gnueabi/bin/armeb-linux-gnueabi- perf -j8
+
+ppc32:
+make ARCH=powerpc CROSS_COMPILE=powerpc-linux-gnu- perf -j8
+
+ppc64be:
+make ARCH=powerpc CROSS_COMPILE=/gcc/hcc_ppcbe_hard/bin/powerpc64-linux-gnu- perf -j8
+
+mips64le:
+make ARCH=mips CROSS_COMPILE=mips64el-linux-gnuabi64- perf -j8
+
+riscv:
+make ARCH=riscv CROSS_COMPILE=riscv64-linux-gnu- perf -j8
+
+spe regs:
+PMSEVFR_EL1, Sampling Event Filter Register
+PMSFCR_EL1, Sampling Filter Control Register
+PMSICR_EL1, Sampling Interval Counter Register
+PMSIDR_EL1, Sampling Profiling ID Register
+PMSIRR_EL1, Sampling Interval Reload Register
+PMSLATFR_EL1, Sampling Latency Filter Register
+PMSNEVFR_EL1, Sampling Inverted Event Filter Register
+
+.  00000038:  b0 c4 a9 fa 0e 43 da ff c0                      PC 0xffda430efaa9c4 el2 ns=1
+.  00000041:  99 08 00                                              LAT 8 ISSUE
+.  00000044:  98 0a 00                                              LAT 10 TOT
+.  00000047:  52 16 00                                              EV RETIRED L1D-ACCESS TLB-ACCESS
+.  0000004a:  49 00                                                   LD
+.  0000004c:  b2 00 fd 6a 5d 00 80 ff 00                      VA 0xff80005d6afd00
+.  00000055:  9a 01 00                                              LAT 1 XLAT
+.  00000058:  b3 00 fd df 4a 40 20 00 80                     PA 0x20404adffd00 ns=1
+.  00000061:  00 00 00 00 00 00                                 PAD
+.  00000067:  71 c5 bb c8 25 c2 00 00 00                    TS 833857567685
+
+.  000003a8:  b0 c0 a9 fa 0e 43 da ff c0                      PC 0xffda430efaa9c0 el2 ns=1
+.  000003b1:  99 02 00                                        LAT 2 ISSUE
+.  000003b4:  98 03 00                                        LAT 3 TOT
+.  000003b7:  52 42 00                                        EV RETIRED NOT-TAKEN
+.  000003ba:  4a 01                                           B COND
+.  000003bc:  b1 c4 a9 fa 0e 43 da ff c0                      TGT 0xffda430efaa9c4 el2 ns=1
+.  000003c5:  00 00 00 00 00 00                               PAD
+.  000003cb:  71 23 ac ca 25 c2 00 00 00                      TS 833857694755
+
+显示__schedule函数的源码 :
+perf probe -L __schedule -k vmlinux-5.4.0-109-generic -s /usr/src/linux-source-5.4.0/linux-source-5.4.0
+
+    -a, --add <[EVENT=]FUNC[@SRC][+OFF|%return|:RL|;PT]|SRC:AL|SRC;PT [[NAME=]ARG ...]>
+                          probe point definition, where
+                GROUP:  Group name (optional)
+                EVENT:  Event name
+                FUNC:   Function name
+                OFF:    Offset from function entry (in byte)
+                %return:        Put the probe at function return
+                SRC:    Source code path
+                RL:     Relative line number from function entry.
+                AL:     Absolute line number in file.
+                PT:     Lazy expression of line code.
+                ARG:    Probe argument (local variable name or
+                        kprobe-tracer argument format.)
+
+arm64 pmu event:
+https://developer.arm.com/documentation/101111/0101/debug-descriptions/performance-monitor-unit/pmu-events
+
+(gdb) bt
+#0  evsel__new_idx (attr=attr@entry=0x7fffffffa0a0, idx=0) at util/evsel.c:300
+#1  0x00000000004e40f2 in __add_event (list=0xdce850, idx=0x7fffffffbe00, attr=0x7fffffffa0a0, init_attr=<optimized out>, name=0x0, metric_id=0x0, pmu=0xdd6920, config_terms=0x7fffffffa090, auto_merge_stats=false, cpu_list=0x0) at util/parse-events.c:261
+#2  0x00000000004eb3d4 in __parse_events_add_numeric (parse_state=parse_state@entry=0x7fffffffbdf0, list=list@entry=0xdce850, pmu=0xdd6920, type=type@entry=1, extended_type=extended_type@entry=0, config=config@entry=0, head_config=0x0) at util/parse-events.c:1494
+#3  0x00000000004eb867 in parse_events_add_numeric (parse_state=parse_state@entry=0x7fffffffbdf0, list=list@entry=0xdce850, type=type@entry=1, config=config@entry=0, head_config=head_config@entry=0x0, wildcard=<optimized out>) at util/parse-events.c:1528
+#4  0x0000000000533987 in parse_events_parse (_parse_state=_parse_state@entry=0x7fffffffbdf0, scanner=0xdbe6b0) at util/parse-events.y:470
+#5  0x00000000004e6779 in parse_events__scanner (parse_state=0x7fffffffbdf0, str=0x7fffffffe7db "cpu-clock") at util/parse-events.c:1991
+#6  __parse_events (evlist=0xdbdc00, str=str@entry=0x7fffffffe7db "cpu-clock", pmu_filter=0x0, err=err@entry=0x7fffffffbe90, fake_pmu=fake_pmu@entry=0x0, warn_if_reordered=warn_if_reordered@entry=true) at util/parse-events.c:2248
+#7  0x00000000004e7592 in parse_events_option (opt=<optimized out>, str=0x7fffffffe7db "cpu-clock", unset=<optimized out>) at util/parse-events.c:2433
+#8  0x000000000060a34e in get_value (p=p@entry=0x7fffffffc080, opt=0xbe2700 <__record_options>, flags=flags@entry=1) at parse-options.c:246
+#9  0x000000000060b5a2 in parse_short_opt (options=<optimized out>, p=<optimized out>) at parse-options.c:351
+#10 parse_options_step (usagestr=0xba9bc0 <__record_usage>, options=0xbe2700 <__record_options>, ctx=0x7fffffffc080) at parse-options.c:539
+#11 parse_options_subcommand (argc=argc@entry=6, argv=argv@entry=0x7fffffffe520, options=0xbe2700 <__record_options>, subcommands=subcommands@entry=0x0, usagestr=0xba9bc0 <__record_usage>, flags=flags@entry=2) at parse-options.c:654
+#12 0x000000000060bd0d in parse_options (argc=argc@entry=6, argv=argv@entry=0x7fffffffe520, options=<optimized out>, usagestr=<optimized out>, flags=flags@entry=2) at parse-options.c:689
+#13 0x00000000004181af in cmd_record (argc=6, argv=0x7fffffffe520) at builtin-record.c:4014
+#14 0x00000000004bb20d in run_builtin (p=p@entry=0xbe70c8 <commands+264>, argc=argc@entry=6, argv=argv@entry=0x7fffffffe520) at perf.c:323
+#15 0x0000000000401632 in handle_internal_command (argv=0x7fffffffe520, argc=6) at perf.c:377
+#16 run_argv (argcp=<synthetic pointer>, argv=<synthetic pointer>) at perf.c:421
+
+
+
+
+
+Breakpoint 1, __perf_evlist__propagate_maps (evlist=0xdbdbf0, evsel=0xdd0760) at evlist.c:39
+39      evlist.c: No such file or directory.
+(gdb) bt
+#0  __perf_evlist__propagate_maps (evlist=0xdbdbf0, evsel=0xdd0760) at evlist.c:39
+#1  0x0000000000604aea in perf_evlist__add (evlist=0xdbdbf0, evsel=0xdd0760) at evlist.c:99
+#2  0x00000000004d1a94 in evlist__add (entry=<optimized out>, evlist=0xdbdbf0) at util/evlist.c:185
+#3  evlist__splice_list_tail (evlist=evlist@entry=0xdbdbf0, list=list@entry=0x7fffffffc040) at util/evlist.c:206
+#4  0x00000000004e6898 in __parse_events (evlist=0xdbdbf0, str=<optimized out>, pmu_filter=pmu_filter@entry=0x0, err=err@entry=0x7fffffffc0e0, fake_pmu=fake_pmu@entry=0x0, warn_if_reordered=warn_if_reordered@entry=true) at util/parse-events.c:2265
+#5  0x00000000004e6ad1 in parse_events (err=0x7fffffffc0e0, str=<optimized out>, evlist=<optimized out>) at util/parse-events.h:39
+#6  parse_event (evlist=<optimized out>, str=<optimized out>) at util/parse-events.c:2290
+#7  0x00000000004189f2 in cmd_record (argc=0, argv=0x7fffffffe550) at builtin-record.c:4166
+#8  0x00000000004bb17d in run_builtin (p=p@entry=0xbe70c8 <commands+264>, argc=argc@entry=4, argv=argv@entry=0x7fffffffe550) at perf.c:323
+#9  0x0000000000401632 in handle_internal_command (argv=0x7fffffffe550, argc=4) at perf.c:377
+#10 run_argv (argcp=<synthetic pointer>, argv=<synthetic pointer>) at perf.c:421
+#11 main (argc=4, argv=0x7fffffffe550) at perf.c:537
+(gdb) c
+Continuing.
+
+Breakpoint 1, __perf_evlist__propagate_maps (evlist=0xdbdbf0, evsel=0xdd0760) at evlist.c:39
+39      in evlist.c
+(gdb) bt
+#0  __perf_evlist__propagate_maps (evlist=0xdbdbf0, evsel=0xdd0760) at evlist.c:39
+#1  0x0000000000604a65 in perf_evlist__propagate_maps (evlist=0xdbdbf0) at evlist.c:88
+#2  0x0000000000604d6e in perf_evlist__set_maps (evlist=0xdbdbf0, cpus=0xdcee90, threads=0xdcf660) at evlist.c:195
+#3  0x00000000004d3c51 in evlist__create_maps (evlist=0xdbdbf0, target=target@entry=0xbe46a0 <record+320>) at util/evlist.c:1067
+#4  0x00000000004186a2 in cmd_record (argc=0, argv=0x7fffffffe550) at builtin-record.c:4200
+#5  0x00000000004bb17d in run_builtin (p=p@entry=0xbe70c8 <commands+264>, argc=argc@entry=4, argv=argv@entry=0x7fffffffe550) at perf.c:323
+#6  0x0000000000401632 in handle_internal_command (argv=0x7fffffffe550, argc=4) at perf.c:377
+#7  run_argv (argcp=<synthetic pointer>, argv=<synthetic pointer>) at perf.c:421
+#8  main (argc=4, argv=0x7fffffffe550) at perf.c:537
+(gdb)
+
+
+
+
+Breakpoint 1, 0x00000000008055c0 in mmap64 ()
+(gdb) bt
+#0  0x00000000008055c0 in mmap64 ()
+#1  0x00000000006065f0 in perf_mmap__mmap (map=0xde05b0, mp=0x7fffffff89a0, fd=6, cpu=...) at mmap.c:40
+#2  0x00000000004e37fe in mmap__mmap (map=0xde05b0, mp=0x7fffffff89a0, fd=6, cpu=...) at util/mmap.c:280
+#3  0x00000000006056da in mmap_per_evsel (evlist=0xdbdbe0, ops=0x7fffffff8980, idx=0, mp=0x7fffffff89a0, cpu_idx=0, thread=0, _output=0x7fffffff88f0, _output_overwrite=0x7fffffff88f4, nr_mmaps=0x7fffffff88ec) at evlist.c:507
+#4  0x0000000000605abb in mmap_per_cpu (evlist=0xdbdbe0, ops=0x7fffffff8980, mp=0x7fffffff89a0) at evlist.c:600
+#5  0x0000000000605d02 in perf_evlist__mmap_ops (evlist=0xdbdbe0, ops=0x7fffffff8980, mp=0x7fffffff89a0) at evlist.c:659
+#6  0x00000000004d3a73 in evlist__mmap_ex (evlist=evlist@entry=0xdbdbe0, pages=<optimized out>, auxtrace_pages=0, auxtrace_overwrite=auxtrace_overwrite@entry=false, nr_cblocks=<optimized out>, affinity=<optimized out>, flush=1, comp_level=0) at util/evlist.c:1019
+#7  0x00000000004157e7 in record__mmap_evlist (rec=0xbe4560 <record>, evlist=0xdbdbe0) at builtin-record.c:1232
+#8  record__mmap (rec=0xbe4560 <record>) at builtin-record.c:1281
+#9  record__open (rec=0xbe4560 <record>) at builtin-record.c:1376
+#10 __cmd_record (argc=<optimized out>, argv=<optimized out>, rec=0xbe4560 <record>) at builtin-record.c:2466
+#11 0x0000000000418f72 in cmd_record (argc=<optimized out>, argv=<optimized out>) at builtin-record.c:4274
+#12 0x00000000004bb1cd in run_builtin (p=p@entry=0xbe70c8 <commands+264>, argc=argc@entry=3, argv=argv@entry=0x7fffffffe560) at perf.c:323
+#13 0x0000000000401632 in handle_internal_command (argv=0x7fffffffe560, argc=3) at perf.c:377
+#14 run_argv (argcp=<synthetic pointer>, argv=<synthetic pointer>) at perf.c:421
+#15 main (argc=3, argv=0x7fffffffe560) at perf.c:537
+
+
+
+#0  machines__deliver_event (machines=0xdbbd98, evlist=0xdc2820, event=0x7ffff7f30310, sample=0x7fffffffaf90, tool=0x7fffffffbca0, file_offset=784, file_path=0xdbb390 "perf.data") at util/session.c:1535
+#1  0x0000000000524c4d in perf_session__deliver_event (session=session@entry=0xdbbb90, event=event@entry=0x7ffff7f30310, tool=tool@entry=0x7fffffffbca0, file_offset=file_offset@entry=784, file_path=file_path@entry=0xdbb390 "perf.data") at util/session.c:1639
+#2  0x00000000005257c5 in perf_session__process_event (file_path=0xdbb390 "perf.data", file_offset=784, event=0x7ffff7f30310, session=0xdbbb90) at util/session.c:1875
+#3  process_simple (session=0xdbbb90, event=0x7ffff7f30310, file_offset=784, file_path=0xdbb390 "perf.data") at util/session.c:2436
+#4  0x0000000000525614 in reader__read_event (rd=rd@entry=0x7fffffffb670, session=session@entry=0xdbbb90, prog=prog@entry=0x7fffffffb640) at util/session.c:2365
+#5  0x00000000005271b4 in reader__process_events (prog=0x7fffffffb640, session=0xdbbb90, rd=0x7fffffffb670) at util/session.c:2414
+#6  __perf_session__process_events (session=0xdbbb90) at util/session.c:2461
+#7  perf_session__process_events (session=session@entry=0xdbbb90) at util/session.c:2627
+#8  0x000000000041d0a5 in __cmd_report (rep=0x7fffffffbca0) at builtin-report.c:992
+#9  cmd_report (argc=<optimized out>, argv=<optimized out>) at builtin-report.c:1712
+#10 0x00000000004bb11d in run_builtin (p=p@entry=0xbe70e0 <commands+288>, argc=argc@entry=1, argv=argv@entry=0x7fffffffe570) at perf.c:323
+#11 0x0000000000401632 in handle_internal_command (argv=0x7fffffffe570, argc=1) at perf.c:377
+#12 run_argv (argcp=<synthetic pointer>, argv=<synthetic pointer>) at perf.c:421
+#13 main (argc=1, argv=0x7fffffffe570) at perf.c:537
+
+(gdb) bt
+#0  perf_event_output_forward (event=0xffff888105e409e0, data=0xffffc900007637c0, regs=0xffff888333c29c80) at kernel/events/core.c:7812
+#1  0xffffffff8124b375 in __perf_event_overflow (event=event@entry=0xffff888105e409e0, throttle=throttle@entry=0, data=data@entry=0xffffc900007637c0, regs=regs@entry=0xffff888333c29c80) at kernel/events/core.c:9550
+#2  0xffffffff8124b6b1 in perf_swevent_overflow (regs=0xffff888333c29c80, data=0xffffc900007637c0, overflow=1, event=0xffff888105e409e0) at kernel/events/core.c:9626
+#3  0xffffffff8124b8fa in perf_tp_event (event_type=<optimized out>, count=count@entry=1, record=0xffffe8ffffc01910, entry_size=entry_size@entry=68, regs=0xffff888333c29c80, head=<optimized out>, rctx=0,
+    task=0x0 <fixed_percpu_data>) at kernel/events/core.c:10164
+#4  0xffffffff8124bc14 in perf_trace_run_bpf_submit (raw_data=<optimized out>, size=size@entry=68, rctx=<optimized out>, call=call@entry=0xffffffff8305ffc0 <event_sched_switch>, count=count@entry=1, regs=<optimized out>,
+    head=<optimized out>, task=<optimized out>) at kernel/events/core.c:10100
+#5  0xffffffff810ca886 in perf_trace_sched_switch (__data=0xffffffff8305ffc0 <event_sched_switch>, preempt=<optimized out>, prev=0xffff888103928d80, next=0xffff888100275100, prev_state=<optimized out>)
+    at ./include/trace/events/sched.h:222
+#6  0xffffffff81f3d674 in trace_sched_switch (prev_state=0, next=0xffff888100275100, prev=0xffff888103928d80, preempt=true) at ./include/trace/events/sched.h:222
+#7  __schedule (sched_mode=sched_mode@entry=1) at kernel/sched/core.c:6707
+#8  0xffffffff81f3dc5d in preempt_schedule_common () at kernel/sched/core.c:6879
+#9  0xffffffff81f3dd10 in __cond_resched () at kernel/sched/core.c:8565
+#10 0xffffffff81f41612 in might_resched () at ./include/linux/kernel.h:111
+#11 down_write (sem=sem@entry=0xffff888107c24be8) at kernel/locking/rwsem.c:1572
+#12 0xffffffff812b17bf in i_mmap_lock_write (mapping=<optimized out>) at ./include/linux/fs.h:481
+#13 unlink_file_vma (vma=vma@entry=0xffff888105c6f930) at mm/mmap.c:128
+#14 0xffffffff812a51e1 in free_pgtables (tlb=tlb@entry=0xffffc90000763b50, mt=mt@entry=0xffffc90000763c50, vma=vma@entry=0xffff888105c6f930, floor=93959872520192, ceiling=140731543756800, mm_wr_locked=mm_wr_locked@entry=true)
+    at mm/memory.c:387
+#15 0xffffffff812b0df5 in unmap_region (mm=mm@entry=0xffff888100048a80, mt=mt@entry=0xffffc90000763c50, vma=vma@entry=0xffff888105c6f930, prev=prev@entry=0xffff888105c6f7e0, next=next@entry=0xffff888105c6ff18,
+    start=start@entry=93959872520192, end=93959872548864, mm_wr_locked=true) at mm/mmap.c:2315
+#16 0xffffffff812b373c in do_vmi_align_munmap (vmi=vmi@entry=0xffffc90000763cf8, vma=0xffff888105c6f930, mm=mm@entry=0xffff888100048a80, start=start@entry=93959872520192, end=end@entry=93959872548864, unlock=<optimized out>,
+    uf=0xffffc90000763ce8) at mm/mmap.c:2557
+#17 0xffffffff812b3a85 in do_vmi_munmap (vmi=vmi@entry=0xffffc90000763cf8, mm=mm@entry=0xffff888100048a80, start=start@entry=93959872520192, len=len@entry=28672, uf=uf@entry=0xffffc90000763ce8, unlock=unlock@entry=false)
+    at mm/mmap.c:2624
+#18 0xffffffff812b3ba3 in __vm_munmap (start=start@entry=93959872520192, len=len@entry=28672, unlock=unlock@entry=false) at mm/mmap.c:2906
+#19 0xffffffff812b3c60 in vm_munmap (start=start@entry=93959872520192, len=len@entry=28672) at mm/mmap.c:2916
+#20 0xffffffff8136e327 in elf_map (filep=<optimized out>, addr=addr@entry=93959872516096, eppnt=eppnt@entry=0xffff8881024ad470, prot=prot@entry=1, type=1048578, total_size=<optimized out>) at fs/binfmt_elf.c:397
+#21 0xffffffff8136f6fc in load_elf_binary (bprm=0xffff88810504c600) at fs/binfmt_elf.c:1165
+#22 0xffffffff8130ad48 in search_binary_handler (bprm=0xffff88810504c600) at fs/exec.c:1738
+#23 exec_binprm (bprm=0xffff88810504c600) at fs/exec.c:1780
+#24 bprm_execve (flags=<optimized out>, filename=<optimized out>, fd=<optimized out>, bprm=0xffff88810504c600) at fs/exec.c:1855
+#25 bprm_execve (bprm=0xffff88810504c600, fd=<optimized out>, filename=<optimized out>, flags=<optimized out>) at fs/exec.c:1811
+#26 0xffffffff8130c392 in do_execveat_common (fd=fd@entry=-100, filename=0xffff888105e33000, flags=0, envp=..., argv=..., envp=..., argv=...) at fs/exec.c:1963
+#27 0xffffffff8130d287 in do_execve (__envp=0x28da0a0, __argv=0x7ffe14822ca0, filename=<optimized out>) at fs/exec.c:2037
+#28 __do_sys_execve (envp=0x28da0a0, argv=0x7ffe14822ca0, filename=<optimized out>) at fs/exec.c:2113
+#29 __se_sys_execve (envp=<optimized out>, argv=<optimized out>, filename=<optimized out>) at fs/exec.c:2108
+#30 __x64_sys_execve (regs=<optimized out>) at fs/exec.c:2108
+#31 0xffffffff81f3497f in do_syscall_x64 (nr=<optimized out>, regs=0xffffc90000763f58) at arch/x86/entry/common.c:50
+#32 do_syscall_64 (regs=0xffffc90000763f58, nr=<optimized out>) at arch/x86/entry/common.c:80
+#33 0xffffffff820000ef in entry_SYSCALL_64 () at arch/x86/entry/entry_64.S:120
+
