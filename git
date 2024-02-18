@@ -12,5 +12,6 @@ git branch --contains $COMMIT_ID
 
 git name-rev COMMIT_ID
 
-
 git log --pretty=fuller
+
+git log --pretty=oneline v5.13..v5.14
