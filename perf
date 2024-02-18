@@ -1,0 +1,2 @@
+./FlameGraph/stackcollapse-perf.pl perf.unfold > perf.folded
+./FlameGraph/flamegraph.pl perf.folded > perf.svg
