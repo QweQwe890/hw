@@ -1,0 +1,9 @@
+make -j96
+make modules_install
+make install
+grub2-mkconfig > /boot/efi/EFI/open/grub.cfg
+grub2-set-default "OS (5.10.0-00057-g832f9cc75e3f-dirty) 2.0 (SP8)"
+grub2-editenv list
+
+make modules_prepare
+
