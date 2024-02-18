@@ -1,0 +1,170 @@
+https://zhuanlan.zhihu.com/p/80727111
+
+https://savannah.gnu.org/git/?group=poke
+https://www.youtube.com/watch?v=nbvswQjsIUQ
+
+lock
+https://lore.kernel.org/linux-riscv/CAJF2gTSGwt-hHbYiBUdiUbo+BTkyQtv_XNkLYws-EJcwURQbLQ@mail.gmail.com/T/#t
+
+内存
+https://www.polarxiong.com/archives/%E5%A4%9A%E7%BA%A7%E9%A1%B5%E8%A1%A8%E5%A6%82%E4%BD%95%E8%8A%82%E7%BA%A6%E5%86%85%E5%AD%98.html
+
+
+tracepoint:
+https://blog.csdn.net/Xia_Lazy/article/details/82884619
+
+TODO:
+https://oskernellab.com/2021/01/24/2021/0127-0001-Topdown_analysis_as_performed_on_Intel_CPU_using_pmu-tools/
+https://www.cnblogs.com/lifan3a/articles/4958188.html
+http://halobates.de/blog/p/262
+https://www.brighttalk.com/webcast/17792/384060/top-down-performance-analysis
+https://download.01.org/perfmon/index/skylake.html
+https://developer.arm.com/documentation/101136/2101/MAP/Get-started-with-MAP
+https://easyperf.net/categories/#microarchitecture
+https://github.com/travisdowns/uarch-bench
+https://www.zhihu.com/column/c_1108400140804726784
+https://github.com/facebookincubator/BOLT   https://engineering.fb.com/2018/06/19/data-infrastructure/accelerate-large-scale-applications-with-bolt/
+https:https://github.com/facebook/hhvm/tree/master/hphp/tools/hfsort
+￼
+git clone https://github.com/andikleen/pmu-tools
+
+PMU事件映射表：https://download.01.org/perfmon/
+
+Cannot access event server: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed (_ssl.c:727)>:
+import ssl
+ssl._create_default_https_context = ssl._create_unverified_context
+
+
+关闭NMI：
+echo 0 > /proc/sys/kernel/nmi_watchdog
+
+
+2021/4/20
+https://www.zhihu.com/column/CArch
+
+2021/4/21:
+https://kernel.taobao.org/2019/03/Top-down-Microarchitecture-Analysis-Method/
+
+https://software.intel.com/content/www/us/en/develop/documentation/vtune-cookbook/top/methodologies/top-down-microarchitecture-analysis-method.html
+vtune
+
+https://software.intel.com/content/www/us/en/develop/documentation/vtune-cookbook/top/methodologies/top-down-microarchitecture-analysis-method.html#top-down-microarchitecture-analysis-method_GUID-FA8F07A1-3590-4A91-864D-CE96456F84D7
+￼
+
+2021/4/22:
+manual: https://github.com/andikleen/pmu-tools/wiki/toplev-manual
+             http://halobates.de/blog/p/245
+             http://halobates.de/blog/p/262
+ucevent: https://github.com/andikleen/pmu-tools/tree/master/ucevent
+
+
+2021/4/23:
+Intel PMU: https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics
+Q&A: https://community.intel.com/t5/Software-Tuning-Performance/Difference-between-quot-CPU-CLK-UNHALTED-CORE-quot-and-quot-CPU/td-p/934488
+IDQ_UOPS_NOT_DELIVERED.CORE: https://easyperf.net/blog/2018/12/29/Understanding-IDQ_UOPS_NOT_DELIVERED
+
+
+def SLOTS(self, EV, level):
+    return Pipeline_Width * CORE_CLKS(self, EV, level)
+
+def CORE_CLKS(self, EV, level):
+    return ((EV("CPU_CLK_UNHALTED.THREAD", level) / 2) * (1 + EV("CPU_CLK_UNHALTED.ONE_THREAD_ACTIVE", level) / EV("CPU_CLK_UNHALTED.REF_XCLK", level))) if ebs_mode else(EV("CPU_CLK_UNHALTED.THREAD_ANY", level) / 2) if smt_enabled else CLKS(self, EV, level)
+
+2021/4/25:
+https://easyperf.net/blog/2018/04/22/What-optimizations-you-can-expect-from-CPU
+https://easyperf.net/blog/2018/02/04/Micro-ops-fusion
+
+2021/4/26:
+Intel体系结构基础：https://blog.csdn.net/yan31415/article/details/108994323
+￼
+
+
+https://easyperf.net/blog/2018/02/15/MicroFusion-in-Intel-CPUs
+https://easyperf.net/blog/2018/02/23/MacroFusion-in-Intel-CPUs
+
+
+2021/5/19:
+cache的三种写操作工作方式: https://blog.csdn.net/u011587070/article/details/81946878
+cache一致性基本概念：http://blog.sina.com.cn/s/blog_6472c4cc0100qxcd.html
+￼
+
+2021/5/20:
+cache读写一致性：https://zhuanlan.zhihu.com/p/65245043
+cache读写一致性：https://zhuanlan.zhihu.com/p/94811032
+￼
+cache tag index关系：https://blog.csdn.net/baidu_35679960/article/details/78610804/
+￼
+cache vipt：https://blog.csdn.net/armlinuxww/article/details/105581568
+￼
+cache tag:https://zhuanlan.zhihu.com/p/65024512
+
+2021/5/21:
+cache msi协议：https://zhuanlan.zhihu.com/p/95435168
+￼
+cache：https://zhuanlan.zhihu.com/p/351550104
+￼
+￼
+false sharing:https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf
+Cache False Sharing Debug:http://oliveryang.net/2018/01/cache-false-sharing-debug/
+c2c:https://joemario.github.io/blog/2016/09/01/c2c-blog/
+
+
+https://easyperf.net/blog/2019/10/12/MT-Perf-Analysis-part2
+https://easyperf.net/blog/2019/10/05/Performance-Analysis-Of-MT-apps
+
+
+
+2021/5/22:
+intel PT:https://easyperf.net/blog/2019/09/13/Intel-PT-part4
+intel PT:https://easyperf.net/blog/2019/09/06/Intel-PT-part3
+intel PT:https://easyperf.net/blog/2019/08/23/Intel-Processor-Trace
+￼
+￼
+gdb with intel PT:https://easyperf.net/blog/2019/08/30/Intel-PT-part2
+tools: https://easyperf.net/blog/2018/04/03/Tools-for-microarchitectural-benchmarking
+perf: https://easyperf.net/blog/2018/08/26/Basics-of-profiling-with-perf
+(memory bound example)topdown: https://easyperf.net/blog/2019/02/09/Top-Down-performance-analysis-methodology
+windows:https://easyperf.net/blog/2019/02/23/How-to-collect-performance-counters-on-Windows
+
+lbr:https://easyperf.net/blog/2019/04/03/Precise-timing-of-machine-code-with-Linux-perf
+lbr perf branch-history:https://lwn.net/Articles/680985/
+lbr perf advanced:https://lwn.net/Articles/680996/
+lbr: https://easyperf.net/blog/2019/05/06/Estimating-branch-probability
+environment for consistent result: https://easyperf.net/blog/2019/08/02/Perf-measurement-environment-on-Linux
+
+
+2021/5/23:
+basic PMU:https://easyperf.net/blog/2018/06/01/PMU-counters-and-profiling-basics
+
+basic perf: https://easyperf.net/blog/2018/08/26/Basics-of-profiling-with-perf
+https://easyperf.net/blog/2018/09/04/Performance-Analysis-Vocabulary
+coz:https://easyperf.net/blog/2020/02/26/coz-vs-sampling-profilers
+measurement: https://easyperf.net/blog/2019/12/30/Comparing-performance-measurements
+
+
+2021/5/24:
+false-sharing:https://easyperf.net/blog/2019/12/17/Detecting-false-sharing-using-perf
+CYCLE_ACTIVITY.STALLS_L3_MISS: https://easyperf.net/blog/2019/07/26/Developing-intuition-when-working-with-performance-counters
+skid: https://easyperf.net/blog/2018/08/29/Understanding-performance-events-skid
+bebs & lbr: https://easyperf.net/blog/2018/06/08/Advanced-profiling-topics-PEBS-and-LBR
+
+
+sentinels: https://easyperf.net/blog/2016/11/21/Sentinels
+small size memory: https://easyperf.net/blog/2016/11/25/Small_size_optimization
+
+code-layout:https://easyperf.net/blog/2019/03/27/Machine-code-layout-optimizatoins
+rules: https://easyperf.net/blog/2020/04/01/HW-SW-rules-of-thumb
+code align: https://easyperf.net/blog/2018/01/18/Code_alignment_issues
+code locality: https://easyperf.net/blog/2018/07/09/Improving-performance-by-better-code-locality
+float: https://easyperf.net/blog/2018/11/08/Using-denormal-floats-is-slow-how-to-detect-it
+switch case: https://easyperf.net/blog/2019/11/22/data-driven-tuning-specialize-switch
+indirce call: https://easyperf.net/blog/2019/11/27/data-driven-tuning-specialize-indirect-call
+code align option: https://easyperf.net/blog/2018/01/25/Code_alignment_options_in_llvm
+
+ebpf：
+https://arthurchiao.art/
+https://www.ebpf.top/
+https://blogs.oracle.com/linux/post/bpf-a-tour-of-program-types
+
+tolearn:
+https://graphics.stanford.edu/~seander/bithacks.html
