@@ -1,1 +1,28 @@
 
+make -C tools clean
+make -C samples/bpf clean
+make clean
+make defconfig
+make headers_install
+make asm-generic
+make modules_prepare
+make M=samples/bpf
+
+install libbpf:
+make -C tools/ bpf_install
+
+
+https://github.com/iovisor/ubpf 
+
+cmake -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release ../
+cmake -DLLVM_INCLUDE_TESTS=OFF -DLLVM_INCLUDE_BENCHMARKS=OFF -DLLVM_ENABLE_PROJECTS=clang -DCMAKE_BUILD_TYPE=Release ../
+
+
+linux/tools/perf/util/bpf_skel/.tmp/bootstrap/bpftool btf dump file vmlinux format c > vmlinux.h
+
+bpftool btf dump file /sys/kernel/btf/vmlinux format raw > vmlinux.raw
+
+./tools/bpf/resolve_btfids/resolve_btfids -b vmlinux tools/testing/selftests/bpf/bpf_testmod.ko
+
+gcc 1.c ~/projects/linux-ebpf/linux/tools/lib/bpf/libbpf.a -lelf -lz
+
