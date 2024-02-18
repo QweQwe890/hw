@@ -17,3 +17,9 @@ https://kernelnewbies.org/LinuxChanges
 资料：
 https://mirrors.edge.kernel.org/pub/linux/kernel/people/paulmck/perfbook/perfbook.2022.09.25a.pdf
 
+git:
+perf-tool-next: https://git.kernel.org/pub/scm/linux/kernel/git/perf/perf-tools-next.git perf-tools-next
+linux-mainline: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.git origin/master
+linux-next: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git origin/master
+libtraceevent: https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git origin/libtraceevent
+linux-5.10: https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ origin/linux-5.10.y
