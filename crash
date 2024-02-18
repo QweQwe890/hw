@@ -1,0 +1,50 @@
+ps：查看进程状态
+struct task_struct xxxxxx -x：查看数据结构体
+sum_exec_runtime - prev_sum_exec_runtime 就是这次调度运行的时间
+struct -o perf_event: 查看结构体各成员相对位置
+
+
+./crash vmlinux vmcore
+
+
+core.pid:
+echo 0 > /proc/sys/kernel/core_uses_pid
+
+打印中断数
+p irq_stat:0
+
+
+
+crash> rd 0xffffffffc08be483 64
+ffffffffc08be483:  000001ffffff46e8 80ffff0000000000   .F..............
+ffffffffc08be493:  dee900f64ea4503d fff0300000f47477   =P.N....wt...0..
+ffffffffc08be4a3:  4149fbf6c2bc940d fe46e8ffffa5bb62   ......IAb.....F.
+ffffffffc08be4b3:  000026000000ffff 78b1e95500000000   .....&......U..x
+ffffffffc08be4c3:  000001000000f474 a3b315b60f000000   t...............
+ffffffffc08be4d3:  00f47479e2e9f64e f4747a33e9550100   N...yt....U.3zt.
+ffffffffc08be4e3:  414a210000000000 f4747c34e9574162   .....!JAbAW.4|t.
+ffffffffc08be4f3:  0000000000000000 00f4747db5e95741   ........AW..}t..
+ffffffffc08be503:  8900010000000000 fffff4747ee6e9ff   ...........~t...
+ffffffffc08be513:  5741fbffffffffff 000000f4747f17e9   ......AW...t....
+ffffffffc08be523:  80878b0000000000 f4748198e9000001   ..............t.
+ffffffffc08be533:  99e9564100000000 0000000000f47481   ....AV...t......
+ffffffffc08be543:  838ae95441000000 ffffff000000f474   ...AT...t.......
+ffffffffc08be553:  74840be95741ffff 00004000000004f4   ..AW...t.....@..
+ffffffffc08be563:  3f75b8c5058b6500 0335e0f47486fce9   .e....u?...t..5.
+ffffffffc08be573:  ede9f64ea22b058b 5500330000f47487   ..+.N....t...3.U
+ffffffffc08be583:  000008f474894ee9 058bff0000000000   .N.t............
+ffffffffc08be593:  748adfe9f64ea22d d7894800000002f4   -.N....t.....H..
+ffffffffc08be5a3:  8bc000f4748b10e9 31e95741ffffffc0   ...t........AW.1
+ffffffffc08be5b3:  0006000000f4748b a2a3058b48000000   .t.........H....
+ffffffffc08be5c3:  00f4748c92e9f64e f4748d83e9550000   N....t....U...t.
+ffffffffc08be5d3:  0000098000000000 f4748eb4e9554100   .........AU...t.
+ffffffffc08be5e3:  8bc6000000000000 01f4749115e95441   ........AT...t..
+ffffffffc08be5f3:  5501d60000000000 000000f4749176e9   .......U.v.t....
+ffffffffc08be603:  c031010000000000 001600f47491c7e9   ......1....t....
+ffffffffc08be613:  3ffe838000000000 000000f47492c8e9   .......?...t....
+ffffffffc08be623:  bb723d8000000000 f47492d9e916f64e   .....=r.N.....t.
+ffffffffc08be633:  74935ae9c3000000 00000000000000f4   .....Z.t........
+ffffffffc08be643:  0000018d86f60000 ffffff0000000010   ................
+ffffffffc08be653:  e90000018c828bff 78a00000f474936c   ........l.t....x
+ffffffffc08be663:  f0b3f47493cde9c3 8ba1d0ffff98bd36   ....t...6.......
+ffffffffc08be673:  93cee9f64ea25815 8b4828ffff98f474   .X.N....t....(H.
