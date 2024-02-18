@@ -1,2 +1,19 @@
 linux社区邮件订阅
 http://vger.kernel.org/vger-lists.html
+
+社区邮件查询：
+https://lore.kernel.org/all/
+
+LTS分支：
+https://git.kernel.org/pub/scm/linux/kernel/git/stable/stable-queue.git/tree/
+https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git
+
+kprobe分支：
+git://git.kernel.org/pub/scm/linux/kernel/git/trace/linux-trace
+
+linux kernel  releasenote
+https://kernelnewbies.org/LinuxChanges
+
+资料：
+https://mirrors.edge.kernel.org/pub/linux/kernel/people/paulmck/perfbook/perfbook.2022.09.25a.pdf
+
