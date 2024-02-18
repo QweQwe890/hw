@@ -23,3 +23,58 @@ linux-mainline: https://git.kernel.org/pub/scm/linux/kernel/git/torvalds/linux.g
 linux-next: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git origin/master
 libtraceevent: https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git origin/libtraceevent
 linux-5.10: https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ origin/linux-5.10.y
+
+format patch:
+git format-patch -1 -o /tmp/patch_dir -s --subject-prefix="PATCH 4.19" +to: stable@vger.kernel.org
+git format-patch -1 -s -v4 --subject-prefix='PATCH RESEND'
+git format-patch -7 -o patch_dir_v2 -s -v2 --cover-letter
+git format-patch -5 -s -o arm32_bpf_kfunc_v2 --cover-letter --subject-prefix="PATCH bpf" -v2
+git format-patch -4 -s -o arm32_bpf_kfunc_v3 --cover-letter --subject-prefix="PATCH bpf-next" -v3
+git send-email --to peterz@infradead.org --to mingo@redhat.com --to acme@kernel.org --to namhyung@kernel.org --to mark.rutland@arm.com --to alexander.shishkin@linux.intel.com --to jolsa@kernel.org --to irogers@google.com --to adrian.hunter@intel.com --to linux-perf-users@vger.kernel.org --to linux-kernel@vger.kernel.org --cc yangjihong1@huawei.com perf-sched-v1/*
+
+perf record: Fix continue profiling after draining the buffer
+
+Commit da231338ec9c0987 ("perf record: Use an eventfd to wakeup when
+done") uses eventfd() to solve a rare race where the setting and
+checking of 'done' which add done_fd to pollfd.  When draining buffer,
+revents of done_fd is 0 and evlist__filter_pollfd function returns a
+non-zero value.  As a result, perf record does not stop profiling.
+
+The following simple scenarios can trigger this condition:
+
+  # sleep 10 &
+  # perf record -p $!
+
+After the sleep process exits, perf record should stop profiling and exit.
+However, perf record keeps running.
+
+If pollfd revents contains only POLLERR or POLLHUP, perf record
+indicates that buffer is draining and need to stop profiling.  Use
+fdarray_flag__nonfilterable() to set done eventfd to nonfilterable
+objects, so that evlist__filter_pollfd() does not filter and check done
+eventfd.
+
+Fixes: da231338ec9c0987 ("perf record: Use an eventfd to wakeup when done")
+
+
+
+Many thanks for the review Thomas, Boris, Tony and Andi. 
+
+Thanks a lot,
+Yang
+
+
+commit 8b12b812f5367c2469fb937da7e28dd321ad8d7b upstream.
+
+Use the macro defined in kernel ABI header to replace the local name.
+
+No functional change.
+
+Thi patch adds PMC events for AMD Family 17 CPUs as defined in [1].  It
+covers events described in section: 2.1.13. Regex pattern in mapfile.csv
+covers all CPUs of the family.
+
+[1] https://support.amd.com/TechDocs/54945_PPR_Family_17h_Models_00h-0Fh.pdf
+
+
+Look good to me.
