@@ -416,3 +416,150 @@ sudo e2fsck /home/aa/projects/qemu/rootfs/ubuntu/x86/rootfs_ubuntu2204.img -y
 fsck.ext4 rootfs.img
 
 echo 1 > /proc/sys/kernel/panic_on_oops
+
+mount.sh
+#!/bin/bash
+
+mount rootfs_ubuntu2204.img rootfs
+mount -t proc /proc rootfs/proc
+mount -t sysfs /sys rootfs/sys
+mount -o bind /dev rootfs/dev
+mount -o bind /dev/pts rootfs/dev/pts
+
+chroot rootfs/
+
+umount.sh
+#!/bin/bash
+cp rootfs/root/projects/openeuler-source/kernel/vmlinux .
+cp rootfs/root/projects/openeuler-source/kernel/arch/x86/boot/bzImage .
+
+cp rootfs/root/projects/linux-mainline/linux/vmlinux vmlinux.ok
+cp rootfs/root/projects/linux-mainline/linux/arch/x86/boot/bzImage bzImage.ok
+
+umount rootfs/proc
+umount rootfs/sys
+umount rootfs/dev/pts
+umount rootfs/dev
+umount rootfs
+
+
+
+makefs:
+首先我们可以从Ubuntu官网下载一个基础版本的rootfs（link），比如这里我下载了一个最新版本
+
+wget http://cdimage.ubuntu.com/ubuntu-base/releases/21.04/release/ubuntu-base-21.04-base-amd64.tar.gz
+用dd命令生成一个rootfs.img，挂载一个目录，并将上面的rootfs解压到里面
+
+ dd if=/dev/zero of=rootfs.img bs=1M count=4k oflag=direct
+ mkfs.ext4 rootfs.img
+ mkdir rootfs
+ mount rootfs.img rootfs
+ tar -xvf ubuntu-base-21.04-base-amd64.tar.gz -C rootfs
+这里我生成了4G大小的rootfs，比较大，主要是后面kdump保存vmcore的空间需要，可根据自己的情况调整大小。
+
+下面就是神奇操作了，我们需要使用chroot将根目录换到rootfs目录，并在新的根目录下直接apt install安装，安装好的库自然就直接在我们的rootfs里了。但是在此之前需要拷贝下网络配置
+
+cp /etc/resolv.conf rootfs/etc/
+然后切换根目录，并配置代理，更新镜像源
+
+chroot rootfs
+export http_proxy=http://username:passwd@openproxy.xxxxxx.com:8080
+export http_proxy=http://username:passwd@openproxy.xxxxxx.com:8080
+apt update
+注意这里我们使用的Ubuntu源是开源的，非公司内部镜像源了。
+
+下面我们就可以安装各种库和工具了，比如kdump依赖工具。需要注意的是不管是那种使用场景，systemd都有必要安装一下，作用init程序。那么这里我们安装下几个工具：
+
+apt install kdump-tools crash kexec-tools makedumpfile systemd -y
+使用最新的21.04 rootfs安装systemd时有些错误，可以忽略错误，直接建立systemd软链接：
+
+ln -s /lib/systemd/systemd /sbin/init
+我这里非要用最新的是因为必须使用较新版本的kexec和makedumpfile工具，以匹配5.10内核。一般可以使用旧一些的rootfs，比如18.04。
+
+测试时发现没有reboot命令，可以装下systemd-sysv：
+
+apt-get install systemd-sysv
+为了方便在qemu里编辑，可以装下vim：
+
+apt install vim
+安装好必须的库以后，可以改一下登录密码，最后退出，回到正常的根目录：
+
+passwd root << EOF
+> 123
+> 123
+> EOF
+exit
+kdump需要第二内核镜像和vmlinux，将其拷贝到rootfs的home目录
+
+cp /home/lhf/hulk/hulk/arch/x86/boot/bzImage rootfs/home/
+cp /home/lhf/hulk/hulk/vmlinux rootfs/home/
+最后umount rootfs。
+
+
+sudo cp /usr/bin/qemu-aarch64-static usr/bin
+sudo cp -b /etc/resolv.conf etc
+sudo ./ch-mount.sh -m rootfs_arm64
+export http_proxy=http://username:passwd@openproxy.xxx.com:8080
+export https_proxy=$http_proxy
+apt update
+apt install openssh-server curl tar gcc libc6-dev strace sudo less psmisc make git vim tmux usbutils python3 net-tools iputils-ping gdb kmod tcpdump
+2、arm的串口需要配成ttyAMA0：
+参考：https://blog.csdn.net/hushui/article/details/103764254
+解决：
+
+sudo ./ch-mount.sh -m rootfs_arm64
+cd etc/systemd/system/getty.target.wants
+mv getty@tty1.service  getty@ttyAMA0.service
+ln -s  /lib/systemd/system/getty@.service    getty@tty1.service
+3、设置root登录
+通过passwd设置密码。也可以进行如下设置免密登录：
+
+sed -i '/^root/ { s/:x:/::/ }' /etc/passwd
+4、自定义设置主机名
+echo qemu_arm64 > /etc/hostname
+
+5、设置ssh-key
+
+ssh-keygen -f linux.id_rsa -t rsa -N ''
+sudo mkdir -p rootfs_arm64/root/.ssh
+cat linux.id_rsa.pub | sudo tee rootfs_arm64/root/.ssh/authorized_keys
+6、启动后配置网络
+
+ifconfig eth0 10.0.2.15 netmask 255.255.255.0
+ifconfig eth0 up
+route add default gw 10.0.2.2
+7、启动自动挂载如下文件系统：
+
+proc /proc proc defaults 0 0
+tmpfs /tmp tmpfs defaults 0 0
+sysfs /sys sysfs defaults 0 0
+tmpfs /dev tmpfs defaults 0 0
+var /dev tmpfs defaults 0 0
+ramfs /dev ramfs defaults 0 0
+debugfs /sys/kernel/debug debugfs defaults 0 0
+
+7、qemu启动镜像：
+qemu-system-aarch64 -machine virt,virtualization=true,gic-version=3 -m 6144m -cpu cortex-a57 -kernel Image -nographic -append "root=/dev/vda console=ttyAMA0 earlycon=pl011,0x9000000" -smp cpus=8 -hda rootfs_arm64.ext4 
+
+问题及解决
+1、启动时报错：
+
+VFS: Cannot open root device "(null)" or unknown-block(0,0): error -6
+Please append a correct "root=" boot option; here are the available partitions:
+fe00 2097152 vda driver: virtio_blk
+Kernel panic - not syncing: VFS: Unable to mount root fs on unknown-block(0,0)
+CPU: 2 PID: 1 Comm: swapper/0 Not tainted 4.4.281+ #59
+Hardware name: linux,dummy-virt (DT)
+Call trace:
+dump_backtrace+0x0/0x148
+show_stack+0x24/0x30
+dump_stack+0xbc/0xf4
+panic+0x13c/0x2b8
+mount_block_root+0x1c4/0x26c
+mount_root+0x11c/0x134
+prepare_namespace+0x134/0x17c
+kernel_init_freeable+0x1d8/0x1fc
+kernel_init+0x18/0x108
+ret_from_fork+0x10/0x30
+
+解决：qemu启动命令参数添加：root=/dev/vda。启动命令：
