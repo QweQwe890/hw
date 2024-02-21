@@ -1,0 +1,18 @@
+#include <linux/module.h>
+#include <linux/irqflags.h>
+static int test_init(void)
+{
+        printk("module init\n");
+        local_irq_disable();
+        while(1) {
+                wfe();
+        }
+        local_irq_enable();
+        return 0;
+}
+static void test_exit(void)
+{
+        printk("module exit\n");
+}
+module_init(test_init);
+module_exit(test_exit);
