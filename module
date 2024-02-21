@@ -1,0 +1,43 @@
+Makefile:
+KERNELDIR ?= /home/xxxx/projects_/qemu/kernel/hulk6.6_arm64
+CROSS_ARCH := ARCH=arm64 CROSS_COMPILE=aarch64-linux-gnu-
+
+ifeq ($(KERNELRELEASE),)
+PWD := $(shell pwd)
+modules:
+        $(MAKE) $(CROSS_ARCH) -C $(KERNELDIR) M=$(PWD) modules
+else
+        obj-m := test.o
+endif
+
+.PHONY : clean
+clean  :
+        $(MAKE) clean -C $(KERNELDIR)  M=$(PWD)
+
+
+test.c
+#include <linux/kernel.h>
+#include <linux/module.h>
+#include <linux/delay.h>
+
+static int __init hardlockup_init(void)
+{
+        printk("module init\n");
+        local_irq_disable();
+        while(1) {
+                msleep(1000);
+        }
+        local_irq_enable();
+        return 0;
+}
+
+static void __exit hardlockup_exit(void)
+{
+}
+
+module_init(hardlockup_init)
+module_exit(hardlockup_exit)
+MODULE_LICENSE("GPL");
+
+
+
