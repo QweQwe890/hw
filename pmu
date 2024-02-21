@@ -1,0 +1,95 @@
+#include <linux/string.h>
+#include <linux/module.h>
+#include <linux/errno.h>
+#include <linux/spinlock.h>
+#include <linux/kernel.h>
+#include <linux/fs.h>
+#include <linux/proc_fs.h>
+#include <linux/timer.h>
+#include <linux/rbtree.h>
+#include <asm/ioctl.h>
+
+extern unsigned long volatile  jiffies;
+struct timer_list timer;
+
+static int aa = 300;
+void tpsn_delay_send_timeout(struct timer_list *data)
+{
+#if 1
+        printk("[%d]start %lu, %d\r\n" ,smp_processor_id(), jiffies, aa);
+if (aa == 300) set_aa_raise_softirq(1);
+        aa--;
+        if (aa > 0)mod_timer(&timer,jiffies + 1);
+        else {
+        dump_stack();
+        printk("get_aa_raise_softirq = %d\n", get_aa_raise_softirq());
+        set_aa_raise_softirq(0);
+        }
+#else
+printk("[%d]start %lu, %d\r\n" ,smp_processor_id(), jiffies, aa);
+aa--;
+if (aa > 0)mod_timer(&timer,jiffies + 1);
+#endif
+}
+void zcc_exit(void)
+{
+        return;
+}
+int hw_zcc_init(void)
+{
+u32 event, cycles;
+int i;
+
+/* disable all counters */
+asm volatile("mcr p15, 0, %0, c9, c12, 0" : : "r"(6u));
+
+/* PMSELR counter 0 */
+asm volatile("mcr p15, 0, %0, c9, c12, 5" : : "r" (0u));
+isb();
+/* read PMXEVCNTR */
+asm volatile("mrc p15, 0, %0, c9, c13, 2" : "=r" (event));
+
+/* read PMCCNTR */
+asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r" (cycles));
+printk("before event = %u, cycles = %u\n", event, cycles);
+
+/* PMSELR counter 0 */
+asm volatile("mcr p15, 0, %0, c9, c12, 5" : : "r" (0u));
+isb();
+/* PMXEVTYPER write instructions event counter 0 */
+//asm volatile("mcr p15, 0, %0, c9, c13, 1" : : "r" (0x8u));
+asm volatile("mcr p15, 0, %0, c9, c13, 1" : : "r" (0x68u));
+isb();
+
+/* PMSELR counter 0 */
+asm volatile("mcr p15, 0, %0, c9, c12, 5" : : "r" (0u));
+isb();
+
+/* PMXEVTYPER read event type */
+//asm volatile("mrc p15, 0, %0, c9, c13, 1" : "=r" (event));
+//printk("event type = %u\n", event);
+
+/* PMCNTENSET enable event counter 0 & cycle counter */
+asm volatile("mcr p15, 0, %0, c9, c12, 1" : : "r" (0x80000001u));
+isb();
+
+/* PMCR enable all counters */
+asm volatile("mcr p15, 0, %0, c9, c12, 0" : : "r"(1u));
+isb();
+
+/* PMCNTENCLR read */
+asm volatile("mrc p15, 0, %0, c9, c12, 2" : "=r" (event));
+printk("event disable bits = %u\n", event);
+
+        timer_setup(&timer, tpsn_delay_send_timeout, 0);
+        timer.expires  = jiffies + 1;
+//        printk("start %lu\r\n" ,jiffies);
+//      set_aa_raise_softirq(0);
+        add_timer( &timer);
+asm volatile("mrc p15, 0, %0, c9, c13, 0" : "=r" (cycles));
+printk("after event = %u, cycles = %u\n", event, cycles);
+        return 0;
+}
+module_init(hw_zcc_init);
+module_exit(zcc_exit);
+MODULE_LICENSE("GPL");
