@@ -1,0 +1,16 @@
+#include <linux/module.h>
+#include <asm/sysreg.h>
+
+static int test_init(void)
+{
+        printk("AMU core = %llu, const = %llu, inst_ret = %llu, mem_stall = %llu\n",
+                read_sysreg_s(SYS_AMEVCNTR0_CORE_EL0), read_sysreg_s(SYS_AMEVCNTR0_CONST_EL0),
+                read_sysreg_s(SYS_AMEVCNTR0_INST_RET_EL0), read_sysreg_s(SYS_AMEVCNTR0_MEM_STALL));
+        return 0;
+}
+static void test_exit(void)
+{
+}
+module_init(test_init);
+module_exit(test_exit);
+MODULE_LICENSE("GPL");
