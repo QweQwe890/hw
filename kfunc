@@ -1,0 +1,113 @@
+kfunc:
+clang -g -O2 -target bpf -D__TARGET_ARCH_x86_64 -c kfunc_call_test.bpf.c -o kfunc_call_test.bpf.o
+bpftool gen skeleton kfunc_call_test.bpf.o > kfunc_call_test.skel.h
+clang -g -O2 -Wall -c kfunc_call_test.user.c -o kfunc_call_test.user.o
+clang -Wall -O2 -g kfunc_call_test.user.o -lbpf  --static -lelf -lz -o kfunc_call_test.user
+
+
+kfunc_call_test.user.c
+#include <stdio.h>
+#include <bpf/libbpf.h>
+#include <bpf/bpf.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <linux/types.h>
+typedef __u16 __sum16;
+#include <linux/if_ether.h>
+#include <linux/if_packet.h>
+#include <linux/ip.h>
+#include <linux/ipv6.h>
+#include <linux/in.h>
+#include <netinet/tcp.h>
+#include <bpf/bpf_endian.h>
+#include "kfunc_call_test.skel.h"
+
+#define MAGIC_BYTES 123
+
+struct ipv4_packet {
+        struct ethhdr eth;
+        struct iphdr iph;
+        struct tcphdr tcp;
+} __packed;
+
+struct ipv4_packet pkt_v4 = {
+        .eth.h_proto = __bpf_constant_htons(ETH_P_IP),
+        .iph.ihl = 5,
+        .iph.protocol = IPPROTO_TCP,
+        .iph.tot_len = __bpf_constant_htons(MAGIC_BYTES),
+        .tcp.urg_ptr = 123,
+        .tcp.doff = 5,
+};
+
+int main(void)
+{
+        struct kfunc_call_test_bpf *skel;
+        int prog_fd, retval, err;
+
+        skel = kfunc_call_test_bpf__open_and_load();
+        if (!skel)
+                return 0;
+
+        prog_fd = bpf_program__fd(skel->progs.kfunc_call_test1);
+        err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
+                                NULL, NULL, (__u32 *)&retval, NULL);
+        printf("kfunc_call_test1 retval = %d, ret = %d\n", retval, err);
+
+        prog_fd = bpf_program__fd(skel->progs.kfunc_call_test2);
+        err = bpf_prog_test_run(prog_fd, 1, &pkt_v4, sizeof(pkt_v4),
+                                NULL, NULL, (__u32 *)&retval, NULL);
+        printf("kfunc_call_test2 retval = %d, ret = %d\n", retval, err);
+
+        kfunc_call_test_bpf__destroy(skel);
+}
+
+kfunc_call_test.bpf.c:
+// SPDX-License-Identifier: GPL-2.0
+/* Copyright (c) 2021 Facebook */
+#include <linux/bpf.h>
+#include <bpf/bpf_helpers.h>
+//#include "bpf_tcp_helpers.h"
+
+extern int bpf_kfunc_call_test2(__u32 a, __u32 b) __ksym;
+extern __u64 bpf_kfunc_call_test1(__u32 a, __u64 b, __u32 c, __u64 d) __ksym;
+
+SEC("classifier")
+int kfunc_call_test2(struct __sk_buff *skb)
+{
+//        struct bpf_sock *sk = skb->sk;
+
+//        if (!sk)
+//                return -1;
+
+//        sk = bpf_sk_fullsock(sk);
+//        if (!sk)
+//                return -1;
+
+        char fmt[] = "aaaaaaaaaaaaaaaaaaa\n";
+        bpf_trace_printk(fmt, sizeof(fmt));
+        return bpf_kfunc_call_test2(1, 2);
+}
+
+SEC("classifier1")
+int kfunc_call_test1(struct __sk_buff *skb)
+{
+        struct bpf_sock *sk = skb->sk;
+        __u64 a = 1ULL << 32;
+        __u32 ret;
+
+//        if (!sk)
+//                return -1;
+
+//        sk = bpf_sk_fullsock(sk);
+//        if (!sk)
+//                return -1;
+
+        a = bpf_kfunc_call_test1(1, a | 2, 3, a | 4);
+        ret = a >> 32;   /* ret should be 2 */
+        ret += (__u32)a; /* ret should be 12 */
+
+        return ret;
+}
+
+char _license[] SEC("license") = "GPL";
+
