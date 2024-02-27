@@ -43,9 +43,9 @@ C-c s u         Pop mark.
      ("https" . "y00:x_2Y@openproxy.xxxx.com:8080")))
 
 (setq url-http-proxy-basic-auth-storage
-    (list (list "openproxy.huawei.com:8080"
+    (list (list "openproxy.xxxx.com:8080"
                 (cons "Input your LDAP UID !"
-                      (base64-encode-string "y00403075:x_2Y0059")))))
+                      (base64-encode-string "y00:x_2Y")))))
 
 (with-eval-after-load 'url-http
   (defun url-https-proxy-connect (connection)
