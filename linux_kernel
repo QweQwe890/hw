@@ -24,6 +24,25 @@ linux-next: https://git.kernel.org/pub/scm/linux/kernel/git/next/linux-next.git 
 libtraceevent: https://git.kernel.org/pub/scm/libs/libtrace/libtraceevent.git origin/libtraceevent
 linux-5.10: https://git.kernel.org/pub/scm/linux/kernel/git/stable/linux.git/ origin/linux-5.10.y
 
+For patches for the currente perf development cycle the perf-tools-next
+branch of:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/acme/linux.git
+
+Should be used.
+
+Hopefully soon we will transition to:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/perf-tools/perf-tools-next.git
+
+And also:
+
+git://git.kernel.org/pub/scm/linux/kernel/git/perf-tools/perf-tools.git
+
+For fixes geared to the current merge window, when we are accepting just
+fixes.
+
+
 format patch:
 git format-patch -1 -o /tmp/patch_dir -s --subject-prefix="PATCH 4.19" +to: stable@vger.kernel.org
 git format-patch -1 -s -v4 --subject-prefix='PATCH RESEND'
