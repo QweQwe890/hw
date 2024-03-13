@@ -1,3 +1,4 @@
+./perf script -F time,comm,pid,tid,event,ip,sym,dso,period -i perf.data > perf.script
 ./FlameGraph/stackcollapse-perf.pl perf.unfold > perf.folded
 ./FlameGraph/flamegraph.pl perf.folded > perf.svg
 
